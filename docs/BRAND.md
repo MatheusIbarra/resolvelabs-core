@@ -15,14 +15,14 @@
 ## Arquivos
 | Arquivo | Para quê |
 |---|---|
-| `mark.svg` | Símbolo colorido (avatar, app) |
-| `mark-mono-dark.svg` / `mark-mono-light.svg` | Uma cor só (carimbos, impressão, fundos coloridos) |
-| `logo-horizontal.svg` / `logo-horizontal-dark.svg` | Símbolo + nome (fundo claro / escuro) |
-| `png/` | Versões raster com fundo transparente (logo @4x, símbolo 512 px) |
-| `../favicon.ico`, `../icon.svg` | Favicon do navegador |
-| `../apple-touch-icon.png` | Ícone do iOS (180 px) |
-| `../icon-192.png`, `../icon-512.png`, `../icon-maskable-512.png` | Ícones do app instalável (PWA) |
-| `../og-image.png` | Imagem de compartilhamento (1200×630) |
+| `public/brand/mark.svg` | Símbolo colorido (avatar, app) |
+| `public/brand/mark-mono-dark.svg` / `mark-mono-light.svg` | Uma cor só (carimbos, impressão, fundos coloridos) |
+| `public/brand/logo-horizontal.svg` / `logo-horizontal-dark.svg` | Símbolo + nome (fundo claro / escuro) |
+| `public/brand/png/` | Versões raster com fundo transparente (logo @4x, símbolo 512 px) |
+| `public/favicon.ico`, `public/icon.svg` | Favicon do navegador |
+| `public/apple-touch-icon.png` | Ícone do iOS (180 px) |
+| `public/icon-192.png`, `public/icon-512.png`, `public/icon-maskable-512.png` | Ícones do app instalável (PWA) |
+| `public/og-image.png` | Imagem de compartilhamento (1200×630) |
 
 ## Regras
 - Área de respiro mínima: metade da largura do frasco ao redor do símbolo.
