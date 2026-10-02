@@ -414,7 +414,7 @@ export const SEO_TOOLS: SeoTool[] = [
       "Produtos reprovados no Google Merchant Center por XML quebrado, HTML nas descrições ou GTIN inválido? Valide o feed, limpe o HTML e veja os GTINs com problema em um clique. Seu feed é tratado no navegador.",
     features: [
       "Valida o XML do feed e corrige preços fora do padrão, \"&\" soltos e IDs ausentes",
-      "Remove ou isola em CDATA o HTML das descrições e títulos",
+      "Remove o HTML das descrições e títulos",
       "Remove a máscara do GTIN e aponta os GTINs com dígito verificador inválido",
       "Aceita o arquivo XML ou a URL do feed",
       "Tratamento no navegador: o conteúdo do feed não passa pelos nossos servidores",

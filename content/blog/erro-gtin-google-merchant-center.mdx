@@ -23,7 +23,7 @@ GTIN (Global Trade Item Number) é o número do código de barras do produto. No
 
 ### Máscara e XML quebrado
 
-Remova pontos, espaços e traços do GTIN e deixe só os dígitos. Em descrições e títulos, remova o HTML (ou envolva em CDATA) e escape o `&` como `&amp;`. Isso dá para fazer em lote com uma ferramenta.
+Remova pontos, espaços e traços do GTIN e deixe só os dígitos. Em descrições e títulos, remova o HTML e escape o `&` como `&amp;`. Isso dá para fazer em lote com uma ferramenta.
 
 ### Dígito verificador inválido
 
@@ -39,7 +39,7 @@ O Reparador de XML do ResolveLabs trata a parte mecânica do problema, direto no
 
 - remove a **máscara** do GTIN;
 - **aponta** os GTINs com dígito verificador inválido, para você conferir com o fornecedor (ele não inventa números);
-- remove HTML das descrições e títulos (ou preserva em CDATA, se preferir);
+- remove o HTML das descrições e títulos;
 - corrige `&` soltos, preços fora do padrão e IDs ausentes.
 
 Ele é um recurso do plano PRO. Se você só quer conferir a estrutura do XML antes, o visualizador de XML é gratuito.

@@ -60,7 +60,7 @@ export default async function BlogPostPage({ params }: { params: Promise<Params>
               {post.author} · <time dateTime={post.date}>{formatPostDate(post.date)}</time> · {post.readingMinutes} min de leitura
             </p>
           </header>
-          <article className="prose prose-stone max-w-none prose-headings:tracking-tight prose-headings:text-stone-900 prose-a:text-teal-700 prose-a:underline-offset-2 prose-code:rounded prose-code:bg-stone-100 prose-code:px-1 prose-code:py-0.5 prose-code:font-normal prose-code:text-stone-800 prose-code:before:content-none prose-code:after:content-none prose-pre:rounded-lg prose-pre:border prose-pre:border-stone-200 prose-pre:bg-stone-100 prose-pre:text-stone-800 prose-blockquote:border-teal-700 prose-blockquote:font-normal prose-blockquote:text-stone-600">
+          <article className="prose prose-stone max-w-none prose-headings:tracking-tight prose-headings:text-stone-900 prose-a:text-teal-700 prose-a:underline-offset-2 prose-code:rounded prose-code:bg-stone-100 prose-code:px-1 prose-code:py-0.5 prose-code:font-normal prose-code:text-stone-800 prose-code:before:content-none prose-code:after:content-none [&_pre_code]:bg-transparent [&_pre_code]:p-0 prose-pre:rounded-lg prose-pre:border prose-pre:border-stone-200 prose-pre:bg-stone-100 prose-pre:text-stone-800 prose-blockquote:border-teal-700 prose-blockquote:font-normal prose-blockquote:text-stone-600">
             {content}
           </article>
 
