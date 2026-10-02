@@ -14,7 +14,8 @@
     "stripe:end-trial": "node scripts/stripe-test.mjs end-trial",
     "stripe:cancel": "node scripts/stripe-test.mjs cancel",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "check:design": "node scripts/check-design.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^6.1.1",
