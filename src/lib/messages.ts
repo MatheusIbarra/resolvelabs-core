@@ -57,6 +57,22 @@ export const MSG = {
     processed: (n: number, pct: number) => `${n} imagens processadas. Tamanho total ${pct >= 0 ? `reduzido em ${pct}%` : `aumentou ${-pct}%`}.`,
     failed: "Não foi possível processar o lote. Alguma imagem pode estar corrompida.",
   },
+  sheetOfx: {
+    readFailed: "Não foi possível ler a planilha. Confira se o arquivo é um CSV ou Excel válido.",
+    generated: (n: number) => `OFX gerado com ${n} lançamento${n === 1 ? "" : "s"}. O download foi iniciado.`,
+    invalidAccount: "Código do banco e conta aceitam só letras, números e hífen (até 22 caracteres).",
+    duplicateColumns: "Cada campo precisa de uma coluna diferente.",
+  },
+  password: {
+    copied: "Senha copiada para a área de transferência.",
+    copyFailed: "Não foi possível copiar. Selecione a senha e copie manualmente.",
+    noRandom: "Seu navegador não oferece geração aleatória segura. Atualize o navegador para usar o gerador.",
+  },
+  qr: {
+    tooLong: "Texto longo demais para um QR Code. Use um conteúdo menor ou um nível de correção mais baixo.",
+    downloaded: "Download do QR Code iniciado.",
+    exportFailed: "Não foi possível gerar a imagem PNG.",
+  },
   mock: {
     limitReached: "Limite gratuito atingido. Assine o PRO para gerar sem limites.",
     emptyKeys: "Preencha o nome de todas as chaves.",

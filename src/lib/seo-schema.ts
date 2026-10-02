@@ -32,7 +32,7 @@ export function softwareApplicationSchema(tool: SeoTool) {
     name: tool.h1,
     description: tool.description,
     url: absoluteUrl(tool.path),
-    applicationCategory: "BusinessApplication",
+    applicationCategory: tool.applicationCategory ?? "BusinessApplication",
     operatingSystem: "Web (navegador)",
     inLanguage: "pt-BR",
     featureList: tool.features,

@@ -36,8 +36,8 @@ export default function SeoSections({ tool }: { tool: SeoTool }) {
         <section className="card p-6">
           <h2 className="section-title mb-2">Privacidade no navegador</h2>
           <p className="text-sm leading-relaxed text-stone-600">
-            O arquivo é processado no seu navegador e não passa pelos nossos servidores. Você pode usar a ferramenta com
-            extratos e documentos de clientes sem expor o conteúdo a terceiros.
+            {tool.privacy ??
+              "O arquivo é processado no seu navegador e não passa pelos nossos servidores. Você pode usar a ferramenta com extratos e documentos de clientes sem expor o conteúdo a terceiros."}
           </p>
         </section>
       </div>

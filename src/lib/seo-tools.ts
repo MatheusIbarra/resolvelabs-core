@@ -21,8 +21,8 @@ export interface SeoTool {
   slug: string;
   /** Caminho público desta landing. */
   path: string;
-  /** "inspector" embute o Inspetor Universal (público, 100% client-side); "cta" leva à ferramenta protegida. */
-  render: "inspector" | "cta";
+  /** "inspector" embute o Inspetor Universal; "cta" leva à ferramenta protegida; "page" = a ferramenta tem rota própria (app/ferramentas/<slug>). */
+  render: "inspector" | "cta" | "page";
   kind: SeoKind;
   /** <title> da página (a marca é adicionada no fim). */
   title: string;
@@ -39,6 +39,10 @@ export interface SeoTool {
   /** Termos pesquisados que a página cobre. Só documentação interna; o Google ignora meta keywords. */
   keywords: string[];
   offers: SeoOffer[];
+  /** Categoria do schema.org (padrão: BusinessApplication). */
+  applicationCategory?: string;
+  /** Texto do cartão de privacidade (padrão: arquivos e documentos processados no navegador). */
+  privacy?: string;
   /** CTA para ferramentas que não rodam dentro da página. */
   cta?: { label: string; href: string; note: string };
 }
@@ -200,7 +204,7 @@ export const SEO_TOOLS: SeoTool[] = [
         a: "Não. Ele apenas lê e exibe o conteúdo; o arquivo original não é modificado.",
       },
     ],
-    related: ["conversor-pdf-para-ofx", "visualizador-xml", "visualizador-planilhas", "pdf-para-ofx-nubank"],
+    related: ["conversor-pdf-para-ofx", "planilha-para-ofx", "visualizador-xml", "visualizador-planilhas"],
     keywords: [
       "abrir arquivo ofx",
       "visualizar ofx online",
@@ -382,7 +386,7 @@ export const SEO_TOOLS: SeoTool[] = [
         a: "Abra o arquivo no visualizador de OFX do ResolveLabs para conferir saldo e lançamentos antes de importar no sistema.",
       },
     ],
-    related: ["pdf-para-ofx-nubank", "pdf-para-ofx-itau", "pdf-para-ofx-bradesco", "visualizador-ofx"],
+    related: ["planilha-para-ofx", "pdf-para-ofx-nubank", "pdf-para-ofx-itau", "pdf-para-ofx-bradesco", "visualizador-ofx"],
     keywords: [
       "converter pdf para ofx",
       "pdf para ofx grátis",
@@ -400,6 +404,181 @@ export const SEO_TOOLS: SeoTool[] = [
     },
   },
   ...BANK_PAGES.map(bankTool),
+  {
+    slug: "planilha-para-ofx",
+    path: "/ferramentas/planilha-para-ofx",
+    render: "page",
+    kind: "converter",
+    shortName: "Conversor de planilha para OFX",
+    title: "Converter planilha (CSV ou Excel) para OFX online grátis",
+    description:
+      "Converta CSV, XLSX ou XLS em arquivo OFX para conciliação bancária: escolha as colunas de data, descrição e valor e baixe o OFX. Grátis, no navegador, sem enviar a planilha.",
+    h1: "Converter planilha para OFX",
+    intro:
+      "Tem o extrato em CSV ou Excel e precisa do OFX para o sistema contábil? Envie a planilha, indique quais colunas são data, descrição e valor e baixe o arquivo. Sua planilha não passa pelos nossos servidores: o processamento é 100% no navegador.",
+    features: [
+      "Lê CSV, XLSX, XLS e ODS, inclusive CSV brasileiro (separador ponto e vírgula, números 1.234,56)",
+      "Mapeamento de colunas: você escolhe qual é a data, a descrição e o valor",
+      "Aceita uma coluna de valor com sinal ou colunas separadas de débito e crédito",
+      "Prévia, total de entradas e saídas e lista de linhas ignoradas antes de baixar",
+      "Processamento 100% no navegador: a planilha não passa pelos nossos servidores",
+      "Gratuito e sem cadastro",
+    ],
+    faq: [
+      {
+        q: "Como converter planilha para OFX?",
+        a: "Envie o arquivo CSV ou Excel, escolha nas listas qual coluna é a data, a descrição e o valor, confira a prévia e clique em gerar. O OFX é criado no seu navegador e o download começa na hora.",
+      },
+      {
+        q: "Quais formatos de planilha são aceitos?",
+        a: "CSV, TSV, XLSX, XLSM, XLS e ODS, com até 20 MB e 50 mil linhas. Em CSV, o ponto e vírgula, a vírgula e o tab são detectados automaticamente, assim como a codificação UTF-8 ou Windows-1252.",
+      },
+      {
+        q: "Como a planilha deve estar organizada?",
+        a: "Uma linha por lançamento, com pelo menos uma coluna de data e uma de valor. A descrição é opcional, mas ajuda na conciliação. Se a primeira linha for o cabeçalho, a ferramenta sugere as colunas pelo nome (Data, Histórico, Valor).",
+      },
+      {
+        q: "Quais formatos de data e valor funcionam?",
+        a: "Datas como 31/01/2026, 31/01/26, 2026-01-31 e datas do Excel. Valores como 1.234,56, 1,234.56, R$ 1.234,56, (1.234,56) para negativo e com sufixo D ou C. O formato do número é detectado pela coluna inteira, e você pode escolher manualmente.",
+      },
+      {
+        q: "Minha planilha tem débito e crédito em colunas separadas. Funciona?",
+        a: "Sim. Troque a opção de valores para colunas separadas e indique a coluna de débito (vira saída) e a de crédito (vira entrada).",
+      },
+      {
+        q: "O que acontece com linhas inválidas?",
+        a: "Linhas em branco são ignoradas sem aviso. Linhas com data ou valor inválidos também ficam de fora do OFX, e a ferramenta mostra quantas foram e o número das primeiras, para você corrigir a planilha se quiser.",
+      },
+      {
+        q: "O OFX gerado inclui o saldo da conta?",
+        a: "Não. O arquivo traz os lançamentos, o período e os dados da conta que você informar. Confira a importação no seu sistema contábil antes de usar em produção.",
+      },
+      {
+        q: "Minha planilha é enviada para algum servidor?",
+        a: "Não. A leitura da planilha e a geração do OFX acontecem no seu navegador e o arquivo não passa pelos nossos servidores.",
+      },
+    ],
+    related: ["conversor-pdf-para-ofx", "visualizador-ofx", "visualizador-planilhas", "pdf-para-ofx-nubank"],
+    keywords: [
+      "converter planilha para ofx",
+      "csv para ofx",
+      "excel para ofx",
+      "xlsx para ofx",
+      "converter csv para ofx online grátis",
+    ],
+    offers: [FREE_OFFER],
+    privacy:
+      "A planilha é lida e convertida no seu navegador e não passa pelos nossos servidores. Você pode usar extratos de clientes sem expor o conteúdo a terceiros.",
+  },
+  {
+    slug: "gerador-senhas",
+    path: "/ferramentas/gerador-senhas",
+    render: "page",
+    kind: "viewer",
+    shortName: "Gerador de senhas",
+    title: "Gerador de senhas fortes e aleatórias online grátis",
+    description:
+      "Gere senhas fortes e aleatórias de 8 a 64 caracteres, com letras, números e símbolos. Grátis, sem cadastro, e a senha nunca sai do seu navegador.",
+    h1: "Gerador de senhas fortes",
+    intro:
+      "Crie uma senha aleatória e forte em um clique: escolha o tamanho e os tipos de caractere. A senha é gerada no seu navegador e não é enviada nem guardada em lugar nenhum.",
+    features: [
+      "Tamanho de 8 a 64 caracteres, com letras maiúsculas, minúsculas, números e símbolos",
+      "Aleatoriedade segura do navegador (crypto.getRandomValues), sem Math.random",
+      "Opção para evitar caracteres parecidos, como O e 0 ou I e l",
+      "Estimativa de força em bits de entropia",
+      "A senha não é enviada nem armazenada: fica só na sua tela",
+      "Gratuito e sem cadastro",
+    ],
+    faq: [
+      {
+        q: "Como gerar uma senha forte e aleatória?",
+        a: "Ajuste o tamanho, marque os tipos de caractere e copie a senha. Para contas importantes, use 16 caracteres ou mais, com os quatro tipos, e uma senha diferente para cada serviço.",
+      },
+      {
+        q: "A senha gerada é enviada ou salva em algum servidor?",
+        a: "Não. Ela é criada no seu navegador e some quando você fecha ou recarrega a página. Nenhum valor de senha é enviado, e nós só contamos que a ferramenta foi usada, sem o conteúdo.",
+      },
+      {
+        q: "Essa senha é realmente aleatória?",
+        a: "Sim. O gerador usa a geração de números aleatórios criptograficamente segura do navegador e sorteia cada caractere sem viés. Garantimos pelo menos um caractere de cada tipo marcado.",
+      },
+      {
+        q: "Qual o tamanho ideal de senha?",
+        a: "Quanto maior, mais forte. Para a maioria das contas, 16 caracteres aleatórios já são difíceis de quebrar. A estimativa de força mostra a entropia em bits: acima de 80 bits é considerada muito forte.",
+      },
+      {
+        q: "Como guardar tantas senhas?",
+        a: "Use um gerenciador de senhas. Ele guarda cada senha única de forma criptografada e preenche os formulários por você.",
+      },
+      {
+        q: "Posso usar para a senha do Wi-Fi?",
+        a: "Pode. Para digitar com facilidade no celular, desmarque os símbolos e marque a opção de evitar caracteres parecidos, e use um tamanho maior para compensar.",
+      },
+    ],
+    related: ["gerador-qrcode", "visualizador-json", "visualizador-ofx"],
+    keywords: ["gerador de senhas", "gerador de senha forte", "gerar senha aleatória", "gerador de senhas online grátis"],
+    offers: [FREE_OFFER],
+    applicationCategory: "SecurityApplication",
+    privacy:
+      "A senha é gerada no seu navegador com geração aleatória segura. Ela não é enviada, salva nem registrada: some quando você fecha a página.",
+  },
+  {
+    slug: "gerador-qrcode",
+    path: "/ferramentas/gerador-qrcode",
+    render: "page",
+    kind: "viewer",
+    shortName: "Gerador de QR Code",
+    title: "Gerador de QR Code grátis: crie e baixe em PNG",
+    description:
+      "Crie QR Code de link ou texto na hora e baixe em PNG de alta resolução. Grátis, sem cadastro, sem validade, e o conteúdo não sai do seu navegador.",
+    h1: "Gerador de QR Code grátis",
+    intro:
+      "Digite um link ou texto e o QR Code aparece na hora. Baixe em PNG nítido para imprimir ou compartilhar. O QR é gerado no seu navegador: o conteúdo não passa pelos nossos servidores.",
+    features: [
+      "QR Code instantâneo enquanto você digita",
+      "Download em PNG de 512, 1024 ou 2048 pixels, com margem de segurança",
+      "Escolha do nível de correção de erros (L, M, Q ou H)",
+      "QR estático: o conteúdo fica gravado no próprio código, sem redirecionamento nem expiração",
+      "Processamento 100% no navegador, sem enviar o conteúdo",
+      "Gratuito e sem cadastro",
+    ],
+    faq: [
+      {
+        q: "Como gerar um QR Code grátis?",
+        a: "Digite ou cole o link ou texto no campo. O QR Code é desenhado na hora e o botão Baixar PNG salva a imagem no seu computador.",
+      },
+      {
+        q: "O QR Code expira?",
+        a: "O QR em si não expira: ele é estático e guarda o conteúdo direto no desenho, sem passar por um serviço de redirecionamento. Se ele aponta para um link, o link ainda pode sair do ar, então confira se o destino continua válido.",
+      },
+      {
+        q: "Posso gerar QR Code de Pix?",
+        a: "Você pode colar o código Pix copia e cola gerado pelo seu banco e o QR vai representar exatamente esse texto. Não geramos nem validamos o Pix, então teste a leitura no app do seu banco antes de imprimir ou divulgar.",
+      },
+      {
+        q: "Qual tamanho de PNG devo escolher?",
+        a: "1024 pixels serve para a maioria dos usos. Use 2048 para impressão em tamanho grande e 512 para telas pequenas.",
+      },
+      {
+        q: "O que é o nível de correção de erros?",
+        a: "É quanto do QR pode estar sujo ou danificado e ainda ser lido. Níveis mais altos toleram mais dano, mas deixam o código mais denso e limitam o tamanho do texto.",
+      },
+      {
+        q: "Posso mudar o destino depois de imprimir?",
+        a: "Não. Como o QR é estático, o conteúdo não pode ser alterado depois. Se o destino mudar, é preciso gerar um novo QR Code.",
+      },
+      {
+        q: "O conteúdo do meu QR Code é enviado para algum servidor?",
+        a: "Não. O QR Code é gerado no seu navegador e o texto não passa pelos nossos servidores.",
+      },
+    ],
+    related: ["gerador-senhas", "visualizador-json", "visualizador-xml"],
+    keywords: ["gerador de qr code", "gerar qr code grátis", "qr code png", "gerador de qr code sem validade"],
+    offers: [FREE_OFFER],
+    applicationCategory: "UtilitiesApplication",
+    privacy: "O QR Code é gerado no seu navegador. O texto ou link que você digita não é enviado nem armazenado.",
+  },
   {
     slug: "reparador-xml-merchant",
     path: "/ferramentas/reparador-xml-merchant",
@@ -465,9 +644,9 @@ export function getSeoTool(slug: string): SeoTool | undefined {
   return SEO_TOOLS.find((t) => t.slug === slug);
 }
 
-/** Slugs gerados pela rota dinâmica; também são as únicas URLs de ferramenta liberadas sem login. */
+/** Slugs gerados pela rota dinâmica (as ferramentas com rota própria ficam de fora). */
 export function dynamicSeoSlugs(): string[] {
-  return SEO_TOOLS.map((t) => t.slug);
+  return SEO_TOOLS.filter((t) => t.render !== "page").map((t) => t.slug);
 }
 
 export function relatedTools(tool: SeoTool): SeoTool[] {
