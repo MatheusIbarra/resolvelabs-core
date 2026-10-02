@@ -118,16 +118,24 @@ export async function getProfile(): Promise<UserProfile> {
   }
 }
 
+/**
+ * Decide, a partir do perfil, se a ação pode seguir. É só UX: o servidor reaplica plano e limite
+ * (ex.: /api/usage reserva o uso de forma atômica), então nunca use isto como controle de acesso.
+ */
+export function decideAccess(profile: UserProfile, rules: { requiresPro?: boolean; freeLimit?: number }): AccessResult {
+  if (!profile.isAuthenticated) return { allowed: false, reason: "AUTH_REQUIRED" };
+  if (profile.plan === "PRO") return { allowed: true };
+  if (rules.requiresPro) return { allowed: false, reason: "PRO_REQUIRED" };
+  if (rules.freeLimit !== undefined && profile.usageCount >= rules.freeLimit) return { allowed: false, reason: "LIMIT_REACHED" };
+  return { allowed: true };
+}
+
 function evaluateAccess(slug: string, profile: UserProfile): AccessResult {
   const tool = getTool(slug);
   if (!tool) throw new ApiError("UNKNOWN_TOOL", "Ferramenta não encontrada.");
-  if (!profile.isAuthenticated) throw new ApiError("UNAUTHENTICATED", "Sessão expirada. Faça login novamente.");
-  if (profile.plan === "PRO") return { allowed: true };
-  if (tool.requiresPro) return { allowed: false, reason: "PRO_REQUIRED" };
-  if (tool.freeLimit !== undefined && profile.usageCount >= tool.freeLimit) {
-    return { allowed: false, reason: "LIMIT_REACHED" };
-  }
-  return { allowed: true };
+  const result = decideAccess(profile, tool);
+  if (!result.allowed && result.reason === "AUTH_REQUIRED") throw new ApiError("UNAUTHENTICATED", "Sessão expirada. Faça login novamente.");
+  return result;
 }
 
 /** Valida permissão (plano + limite de uso) com o estado atual do banco. */

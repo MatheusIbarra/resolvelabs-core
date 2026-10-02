@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ToastProvider } from "@/components/ui/Toast";
+import { PaywallProvider } from "@/hooks/usePaywall";
 import SupportWidget from "@/components/SupportWidget";
 import RouteProgress from "@/components/ui/RouteProgress";
 
@@ -47,8 +48,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <RouteProgress />
         <ToastProvider>
           <AuthProvider>
-            {children}
-            <SupportWidget />
+            <PaywallProvider>
+              {children}
+              <SupportWidget />
+            </PaywallProvider>
           </AuthProvider>
         </ToastProvider>
       </body>

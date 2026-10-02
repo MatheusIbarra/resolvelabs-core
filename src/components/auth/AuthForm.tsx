@@ -64,6 +64,12 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const [phone, setPhone] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  // Entre login e cadastro o destino (?next=) precisa acompanhar o usuário.
+  const [nextQuery, setNextQuery] = useState("");
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get("next");
+    setNextQuery(next && next.startsWith("/") && !next.startsWith("//") ? `?next=${encodeURIComponent(next)}` : "");
+  }, []);
   const [error, setError] = useState<string | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
 
@@ -195,7 +201,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
       <p className="mt-5 text-center text-sm text-stone-600">
         {copy.altText}{" "}
-        <Link href={copy.altHref} className="font-medium text-teal-700 hover:underline">{copy.altLink}</Link>
+        <Link href={`${copy.altHref}${nextQuery}`} className="font-medium text-teal-700 hover:underline">{copy.altLink}</Link>
       </p>
     </div>
   );

@@ -78,7 +78,7 @@ test.describe("ResolveLabs - jornada do usuário e do admin", () => {
     const paywall = page.getByRole("dialog", { name: "Limite gratuito atingido." });
     await expect(paywall).toBeVisible();
     await expect(paywall.getByText(`${FREE_LIMIT}/${FREE_LIMIT} execuções utilizadas`)).toBeVisible();
-    await expect(paywall.getByRole("button", { name: /Testar 7 dias grátis/ })).toBeVisible();
+    await expect(paywall.getByRole("button", { name: "Ver planos PRO" })).toBeVisible();
 
     // O modal fecha com Esc e a ferramenta continua bloqueada (nenhuma nova conversão).
     await page.keyboard.press("Escape");

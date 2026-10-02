@@ -2,10 +2,12 @@
 
 import { useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { ApiError, checkToolAccess, refundPdfUsage, registerPdfUsage } from "@/lib/fakeApi";
+import { ApiError, refundPdfUsage, registerPdfUsage } from "@/lib/fakeApi";
+import { useAccessControl } from "@/hooks/useAccessControl";
+import { usePaywall } from "@/hooks/usePaywall";
 import { baseName, downloadBlob } from "@/utils/download";
 import { PdfNoTextError, convertPdfToOfx, ofxToBlob } from "@/utils/pdfToOfx";
-import { FREE_PDF_LIMIT, SUPPORTED_BANKS, type DenyReason } from "@/lib/content";
+import { FREE_PDF_LIMIT, SUPPORTED_BANKS } from "@/lib/content";
 import { Loading, LoadingLabel } from "./ui/Loading";
 import Alert from "./ui/Alert";
 import { useToast } from "./ui/Toast";
@@ -14,15 +16,12 @@ import { MSG, errorMessage } from "@/lib/messages";
 const ACCEPTED_TYPE = "application/pdf";
 const TOOL_SLUG = "pdf-para-ofx";
 
-interface UploadZoneProps {
-  onAccessDenied: (reason: DenyReason) => void;
-}
-
-export default function UploadZone({ onAccessDenied }: UploadZoneProps) {
+export default function UploadZone() {
   const toast = useToast();
+  const paywall = usePaywall();
+  const { checkAccess, isChecking: isValidating } = useAccessControl();
   const { profile, isLoading, error: profileError, refresh, applyProfile } = useAuth();
   const [isDragging, setIsDragging] = useState(false);
-  const [isValidating, setIsValidating] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -31,23 +30,8 @@ export default function UploadZone({ onAccessDenied }: UploadZoneProps) {
   const used = Math.min(profile?.usageCount ?? 0, FREE_PDF_LIMIT);
   const isLimitReached = profile?.plan === "FREE" && profile.usageCount >= FREE_PDF_LIMIT;
 
-  /** Roda a validação de permissão na "API". Retorna true se pode prosseguir. */
-  const validateAccess = async (): Promise<boolean> => {
-    setIsValidating(true);
-    try {
-      const access = await checkToolAccess(TOOL_SLUG);
-      if (!access.allowed) {
-        onAccessDenied(access.reason);
-        return false;
-      }
-      return true;
-    } catch (err) {
-      toast.error(errorMessage(err, MSG.pdf.validateFailed));
-      return false;
-    } finally {
-      setIsValidating(false);
-    }
-  };
+  /** Confere plano/limite antes de agir; se não puder, o paywall global abre com o motivo certo. */
+  const validateAccess = () => checkAccess({ slug: TOOL_SLUG });
 
   const handleFile = async (file: File | undefined) => {
     if (!file || isBusy) return;
@@ -79,7 +63,9 @@ export default function UploadZone({ onAccessDenied }: UploadZoneProps) {
     } catch (err) {
       if (err instanceof ApiError && err.code === "LIMIT_REACHED") {
         await refresh();
-        onAccessDenied("LIMIT_REACHED");
+        paywall.open("LIMIT_REACHED");
+      } else if (err instanceof ApiError && err.code === "UNAUTHENTICATED") {
+        paywall.open("AUTH_REQUIRED"); // sessão expirou no meio do caminho
       } else if (err instanceof PdfNoTextError) {
         toast.error(err.message);
       } else {

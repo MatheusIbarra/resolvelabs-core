@@ -22,18 +22,47 @@ export const PRO_BENEFITS = [
   "Acesso ao Otimizador de Imagens",
 ];
 
-export type DenyReason = "LIMIT_REACHED" | "PRO_REQUIRED";
+export type DenyReason = "AUTH_REQUIRED" | "LIMIT_REACHED" | "PRO_REQUIRED";
 
-export const PAYWALL_COPY: Record<DenyReason, { tag: string; title: string; body: string }> = {
+export interface PaywallAction {
+  label: string;
+  href: string;
+  /** Leva o caminho atual em `?next=` para voltar à ferramenta depois do login/cadastro. */
+  returnHere?: boolean;
+}
+
+export interface PaywallCopy {
+  tag: string;
+  title: string;
+  body: string;
+  cta: PaywallAction;
+  secondary?: PaywallAction;
+  /** Mostra os benefícios do PRO e a linha do teste grátis. */
+  showPro: boolean;
+}
+
+export const PAYWALL_COPY: Record<DenyReason, PaywallCopy> = {
+  AUTH_REQUIRED: {
+    tag: "Conta gratuita",
+    title: "Salve seu progresso.",
+    body: "Crie uma conta gratuita para continuar usando as ferramentas do ResolveLabs. Leva menos de um minuto.",
+    cta: { label: "Criar conta", href: "/register", returnHere: true },
+    secondary: { label: "Entrar", href: "/login", returnHere: true },
+    showPro: false,
+  },
   LIMIT_REACHED: {
     tag: `${FREE_PDF_LIMIT}/${FREE_PDF_LIMIT} execuções utilizadas`,
     title: "Limite gratuito atingido.",
     body: `Você usou suas ${FREE_PDF_LIMIT} execuções gratuitas. Assine o ResolveLabs PRO e ganhe acesso ilimitado a esta e a TODAS as ferramentas da plataforma.`,
+    cta: { label: "Ver planos PRO", href: "/checkout" },
+    showPro: true,
   },
   PRO_REQUIRED: {
     tag: "Recurso exclusivo PRO",
     title: "Ferramenta exclusiva PRO.",
-    body: "Esta ferramenta faz parte do plano PRO. Assine o ResolveLabs PRO e ganhe acesso ilimitado a TODAS as ferramentas da plataforma.",
+    body: "Esta funcionalidade avançada está disponível apenas para assinantes PRO. Assine o ResolveLabs PRO e ganhe acesso ilimitado a TODAS as ferramentas da plataforma.",
+    cta: { label: "Fazer upgrade para PRO", href: "/checkout" },
+    showPro: true,
   },
 };
 
