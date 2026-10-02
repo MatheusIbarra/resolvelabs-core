@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { supportApi, STATUS_LABEL, type Ticket } from "@/lib/supportApi";
 import { usePolling } from "@/hooks/usePolling";
-import { BTN_SOLID, FIELD, MONO } from "../admin/adminUi";
 
 import { Loading, LoadingLabel } from "../ui/Loading";
 
@@ -114,7 +113,7 @@ export default function TicketThread({ ticketId, viewer, actions, onChange }: Ti
           <p className="truncate text-sm font-semibold text-stone-900" title={ticket.subject}>
             {ticket.subject}
           </p>
-          <p className={`${MONO} mt-1 flex flex-wrap items-center gap-2 text-stone-500`}>
+          <p className="text-xs font-medium mt-1 flex flex-wrap items-center gap-2 text-stone-500">
             <StatusTag status={ticket.status} />
             <span>#{ticket.id.slice(-6)}</span>
             {ticket.userEmail && <span className="normal-case tracking-normal">{ticket.userEmail}</span>}
@@ -173,7 +172,7 @@ export default function TicketThread({ ticketId, viewer, actions, onChange }: Ti
             rows={3}
             placeholder={viewer === "admin" ? "Responder ao cliente…" : "Escreva sua mensagem…"}
             aria-label="Mensagem"
-            className={`${FIELD} resize-none`}
+            className="input resize-none"
           />
           {sendError && (
             <p className="mt-2 text-sm text-red-700" role="alert">
@@ -182,7 +181,7 @@ export default function TicketThread({ ticketId, viewer, actions, onChange }: Ti
           )}
           <div className="mt-2 flex items-center justify-between">
             <span className="text-xs text-stone-400">Ctrl+Enter envia</span>
-            <button type="submit" disabled={sending || draft.trim().length === 0} className={BTN_SOLID}>
+            <button type="submit" disabled={sending || draft.trim().length === 0} className="btn-primary">
               {sending ? <LoadingLabel>Enviando…</LoadingLabel> : "Enviar"}
             </button>
           </div>

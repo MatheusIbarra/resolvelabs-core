@@ -166,21 +166,21 @@ export default function AuthForm({ mode }: { mode: Mode }) {
               value={phone}
               onChange={(e) => setPhone(maskPhone(e.target.value))}
               placeholder="(11) 91234-5678"
-              className="input mb-5 font-mono"
+              className="input mb-5"
             />
 
-            <label htmlFor="terms" className="mb-5 flex cursor-pointer items-start gap-3 border-2 border-stone-900 p-3 font-mono text-xs text-stone-900">
+            <label htmlFor="terms" className="mb-5 flex cursor-pointer items-start gap-3 rounded-md border border-stone-200 bg-stone-50 p-3 text-sm text-stone-700">
               <input
                 id="terms"
                 type="checkbox"
                 required
                 checked={termsAccepted}
                 onChange={(e) => setTermsAccepted(e.target.checked)}
-                className="mt-0.5 h-4 w-4 shrink-0 accent-stone-900"
+                className="mt-0.5 h-4 w-4 shrink-0 accent-teal-700"
               />
               <span>
                 Li e concordo com os{" "}
-                <Link href="/termos" target="_blank" className="font-semibold underline">Termos de Uso</Link>
+                <Link href="/termos" target="_blank" className="font-medium text-teal-700 hover:underline">Termos de Uso</Link>
               </span>
             </label>
           </>

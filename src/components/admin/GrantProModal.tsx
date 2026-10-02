@@ -5,7 +5,6 @@ import { adminApi, type AdminUser } from "@/lib/adminApi";
 import { ADMIN_MSG, errorMessage } from "@/lib/messages";
 import { useToast } from "../ui/Toast";
 import { LoadingLabel } from "../ui/Loading";
-import { BTN, BTN_SOLID, FIELD, MONO } from "./adminUi";
 
 const PRESETS = [7, 30, 90, 365];
 
@@ -89,11 +88,11 @@ export default function GrantProModal({ user, onClose, onGranted }: GrantProModa
               value={days}
               disabled={lifetime}
               onChange={(e) => setDays(e.target.value)}
-              className={`${FIELD} disabled:bg-stone-100 disabled:text-stone-400`}
+              className="input disabled:bg-stone-100 disabled:text-stone-400"
             />
             <div className="mt-2 flex flex-wrap gap-2">
               {PRESETS.map((p) => (
-                <button key={p} type="button" disabled={lifetime} onClick={() => setDays(String(p))} className={BTN}>
+                <button key={p} type="button" disabled={lifetime} onClick={() => setDays(String(p))} className="btn-secondary btn-sm">
                   {p}d
                 </button>
               ))}
@@ -111,8 +110,8 @@ export default function GrantProModal({ user, onClose, onGranted }: GrantProModa
         </div>
 
         <div className="flex justify-end gap-2 border-t border-stone-200 p-4">
-          <button type="button" onClick={onClose} className={BTN}>Cancelar</button>
-          <button type="submit" disabled={isPending} className={BTN_SOLID}>
+          <button type="button" onClick={onClose} className="btn-secondary btn-sm">Cancelar</button>
+          <button type="submit" disabled={isPending} className="btn-primary">
             {isPending ? <LoadingLabel>Concedendo PRO…</LoadingLabel> : "Conceder PRO"}
           </button>
         </div>

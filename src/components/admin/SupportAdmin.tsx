@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { supportApi, type Ticket, type TicketStatus, type TicketSummary } from "@/lib/supportApi";
 import { usePolling } from "@/hooks/usePolling";
 import TicketThread, { StatusTag } from "../support/TicketThread";
-import { BTN, MONO } from "./adminUi";
 
 import { Loading, LoadingLabel } from "../ui/Loading";
 
@@ -119,7 +118,7 @@ export default function SupportAdmin() {
             onChange={syncSummary}
             actions={(ticket, onUpdate) =>
               ticket.status !== "closed" && (
-                <button onClick={() => closeTicket(ticket.id, onUpdate)} disabled={closing} className={`${BTN} shrink-0`}>
+                <button onClick={() => closeTicket(ticket.id, onUpdate)} disabled={closing} className="btn-secondary btn-sm shrink-0">
                   {closing ? <LoadingLabel>Fechando…</LoadingLabel> : "Fechar"}
                 </button>
               )

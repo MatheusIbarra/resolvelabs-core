@@ -1,12 +1,12 @@
 "use client";
 
+import { fmtDate } from "@/lib/format";
 import { useCallback, useEffect, useState } from "react";
 import { adminApi, type AdminCoupon } from "@/lib/adminApi";
 import { ADMIN_MSG, errorMessage } from "@/lib/messages";
 import { Loading, LoadingLabel } from "../ui/Loading";
 import Alert from "../ui/Alert";
 import { useToast } from "../ui/Toast";
-import { BTN, BTN_SOLID, FIELD, MONO, TD, TH, fmtDate } from "./adminUi";
 
 type CouponStatus = "ativo" | "inativo" | "expirado" | "esgotado";
 
@@ -93,22 +93,22 @@ export default function CouponsTab() {
         <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
             <label htmlFor="c-code" className={labelCls}>Código</label>
-            <input id="c-code" value={form.code} onChange={set("code")} placeholder="LANCAMENTO50" maxLength={32} className={`${FIELD} uppercase`} />
+            <input id="c-code" value={form.code} onChange={set("code")} placeholder="LANCAMENTO50" maxLength={32} className="input uppercase" />
           </div>
           <div>
             <label htmlFor="c-pct" className={labelCls}>Desconto (%)</label>
-            <input id="c-pct" type="number" min={1} max={100} value={form.discountPercent} onChange={set("discountPercent")} className={FIELD} />
+            <input id="c-pct" type="number" min={1} max={100} value={form.discountPercent} onChange={set("discountPercent")} className="input" />
           </div>
           <div>
             <label htmlFor="c-exp" className={labelCls}>Válido até</label>
-            <input id="c-exp" type="date" value={form.expiresAt} onChange={set("expiresAt")} className={FIELD} />
+            <input id="c-exp" type="date" value={form.expiresAt} onChange={set("expiresAt")} className="input" />
           </div>
           <div>
             <label htmlFor="c-max" className={labelCls}>Máx. de usos</label>
-            <input id="c-max" type="number" min={1} value={form.maxUses} onChange={set("maxUses")} className={FIELD} />
+            <input id="c-max" type="number" min={1} value={form.maxUses} onChange={set("maxUses")} className="input" />
           </div>
           <div className="flex items-end">
-            <button type="submit" disabled={isCreating} className={`${BTN_SOLID} w-full`}>
+            <button type="submit" disabled={isCreating} className="btn-primary w-full">
               {isCreating ? <LoadingLabel>Criando cupom…</LoadingLabel> : "Criar cupom"}
             </button>
           </div>
@@ -133,44 +133,44 @@ export default function CouponsTab() {
           <table className="w-full min-w-[40rem] text-sm">
             <thead className="border-b border-stone-200 bg-stone-50">
               <tr>
-                <th className={TH}>Código</th>
-                <th className={TH}>Desconto</th>
-                <th className={TH}>Validade</th>
-                <th className={TH}>Usos</th>
-                <th className={TH}>Status</th>
-                <th className={`${TH} text-right`}>Ações</th>
+                <th className="table-th">Código</th>
+                <th className="table-th">Desconto</th>
+                <th className="table-th">Validade</th>
+                <th className="table-th">Usos</th>
+                <th className="table-th">Status</th>
+                <th className="table-th text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
               {visible.length === 0 && (
-                <tr><td colSpan={6} className={`${TD} py-10 text-center text-stone-500`}>Nenhum cupom {showAll ? "cadastrado" : "ativo"}</td></tr>
+                <tr><td colSpan={6} className="table-td py-10 text-center text-stone-500">Nenhum cupom {showAll ? "cadastrado" : "ativo"}</td></tr>
               )}
               {visible.map((c) => {
                 const status = statusOf(c);
                 return (
                   <tr key={c.id} className="hover:bg-stone-50">
-                    <td className={`${TD} font-mono text-xs font-semibold text-stone-900`}>{c.code}</td>
-                    <td className={`${TD}`}>{c.discountPercent}%</td>
-                    <td className={`${TD}`}>{fmtDate(c.expiresAt)}</td>
-                    <td className={`${TD}`}>{c.usesCount}/{c.maxUses}</td>
-                    <td className={TD}>
+                    <td className="table-td font-mono text-xs font-semibold text-stone-900">{c.code}</td>
+                    <td className="table-td">{c.discountPercent}%</td>
+                    <td className="table-td">{fmtDate(c.expiresAt)}</td>
+                    <td className="table-td">{c.usesCount}/{c.maxUses}</td>
+                    <td className="table-td">
                       <span className={`capitalize ${status === "ativo" ? "badge-brand" : status === "inativo" ? "badge-neutral" : "badge-warn"}`}>
                         {status}
                       </span>
                     </td>
-                    <td className={`${TD} text-right`}>
+                    <td className="table-td text-right">
                       <div className="flex justify-end gap-2">
                         <button
                           disabled={busyId === c.id || status === "expirado" || status === "esgotado"}
                           onClick={() => run(c, () => adminApi.setCouponActive(c.id, !c.active), ADMIN_MSG.couponToggled(c.code, !c.active))}
-                          className={BTN}
+                          className="btn-secondary btn-sm"
                         >
                           {c.active ? "Desativar" : "Ativar"}
                         </button>
                         <button
                           disabled={busyId === c.id}
                           onClick={() => window.confirm(`Excluir o cupom ${c.code}?`) && run(c, () => adminApi.deleteCoupon(c.id), ADMIN_MSG.couponDeleted(c.code))}
-                          className={BTN}
+                          className="btn-secondary btn-sm"
                         >
                           Excluir
                         </button>

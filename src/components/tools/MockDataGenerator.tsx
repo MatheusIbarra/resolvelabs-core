@@ -29,9 +29,9 @@ function highlight(json: string) {
   let m: RegExpExecArray | null;
   while ((m = re.exec(json))) {
     if (m.index > last) out.push(json.slice(last, m.index));
-    if (m[1] && m[2]) out.push(<span key={m.index} className="text-sky-300">{m[1]}</span>, m[2]);
-    else if (m[1]) out.push(<span key={m.index} className="text-emerald-300">{m[1]}</span>);
-    else out.push(<span key={m.index} className="text-amber-300">{m[3] ?? m[4]}</span>);
+    if (m[1] && m[2]) out.push(<span key={m.index} className="font-medium text-teal-800">{m[1]}</span>, m[2]);
+    else if (m[1]) out.push(<span key={m.index} className="text-amber-700">{m[1]}</span>);
+    else out.push(<span key={m.index} className="text-sky-700">{m[3] ?? m[4]}</span>);
     last = m.index + m[0].length;
   }
   out.push(json.slice(last));
@@ -149,19 +149,19 @@ export default function MockDataGenerator() {
         </section>
 
         {/* Code preview */}
-        <section className="flex min-h-96 flex-col overflow-hidden rounded-lg bg-stone-900 lg:col-span-3">
-          <div className="flex items-center justify-between border-b border-stone-700 px-4 py-3">
-            <span className="font-mono text-xs text-stone-400">response.json</span>
+        <section className="card flex min-h-96 flex-col overflow-hidden lg:col-span-3">
+          <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3">
+            <h2 className="section-title">Resultado em JSON</h2>
             <div className="flex items-center gap-2">
-              <button onClick={copy} aria-label="Copiar para a área de transferência" className="rounded-md border border-stone-600 px-3 py-1.5 text-xs font-medium text-stone-100 hover:bg-stone-800">
+              <button onClick={copy} aria-label="Copiar para a área de transferência" className="btn-secondary !px-3 !py-1.5 text-xs">
                 {copied ? "Copiado!" : "Copiar"}
               </button>
-              <button onClick={download} className="rounded-md border border-stone-600 px-3 py-1.5 text-xs font-medium text-stone-100 hover:bg-stone-800">
+              <button onClick={download} className="btn-secondary !px-3 !py-1.5 text-xs">
                 Baixar .json
               </button>
             </div>
           </div>
-          <pre className="max-h-[32rem] flex-1 overflow-auto p-4 font-mono text-xs leading-relaxed text-stone-300">
+          <pre className="max-h-[32rem] flex-1 overflow-auto bg-stone-50 p-4 font-mono text-xs leading-relaxed text-stone-800">
             <code>{highlight(json).map((n, i) => <Fragment key={i}>{n}</Fragment>)}</code>
           </pre>
         </section>

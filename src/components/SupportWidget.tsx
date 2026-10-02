@@ -7,7 +7,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
 import { filterFaq } from "@/lib/supportFaq";
 import { supportApi, type TicketSummary } from "@/lib/supportApi";
-import { BTN, BTN_SOLID, FIELD, MONO } from "./admin/adminUi";
 import TicketThread, { StatusTag } from "./support/TicketThread";
 
 type View = "faq" | "tickets" | "new" | "chat";
@@ -162,7 +161,7 @@ function FaqView({ onContact }: { onContact: () => void }) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar nas perguntas frequentes…"
           aria-label="Buscar no FAQ"
-          className={FIELD}
+          className="input"
           autoFocus
         />
       </div>
@@ -178,7 +177,7 @@ function FaqView({ onContact }: { onContact: () => void }) {
                 className="flex w-full items-start justify-between gap-3 px-3 py-3 text-left text-sm font-medium text-stone-900 hover:bg-stone-50"
               >
                 {item.question}
-                <span className={`${MONO} shrink-0 transition-transform duration-200 ${isOpen ? "rotate-45" : ""}`}>+</span>
+                <span className={`text-xs font-medium shrink-0 transition-transform duration-200 ${isOpen ? "rotate-45" : ""}`}>+</span>
               </button>
               <div className={`grid transition-all duration-200 ease-out ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
                 <p className="overflow-hidden px-3 text-sm leading-relaxed text-stone-600">
@@ -194,7 +193,7 @@ function FaqView({ onContact }: { onContact: () => void }) {
       </ul>
 
       <div className="border-t border-stone-200 p-3">
-        <button onClick={onContact} className={`${BTN_SOLID} w-full`}>
+        <button onClick={onContact} className="btn-primary w-full">
           Falar com suporte / abrir ticket
         </button>
       </div>
@@ -207,7 +206,7 @@ function LoginGate({ next }: { next: string }) {
     <div className="flex h-full flex-col items-start justify-center gap-4 p-5">
       <span className="badge-warn">Acesso restrito</span>
       <p className="text-sm text-stone-800">Você precisa estar autenticado para abrir um ticket de suporte.</p>
-      <Link href={`/login?next=${encodeURIComponent(next)}`} className={`${BTN_SOLID} inline-block`}>
+      <Link href={`/login?next=${encodeURIComponent(next)}`} className="btn-primary inline-block">
         Entrar
       </Link>
     </div>
@@ -236,7 +235,7 @@ function TicketList({ tickets, onOpen, onNew }: { tickets: TicketSummary[] | nul
         ))}
       </ul>
       <div className="border-t border-stone-200 p-3">
-        <button onClick={onNew} className={`${BTN} w-full`}>
+        <button onClick={onNew} className="btn-secondary btn-sm w-full">
           + Novo ticket
         </button>
       </div>
@@ -273,7 +272,7 @@ function NewTicketForm({ onCreated }: { onCreated: (t: TicketSummary) => void })
     >
       <label className="block">
         <span className="label">Assunto</span>
-        <input value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={SUBJECT_MAX} required className={FIELD} />
+        <input value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={SUBJECT_MAX} required className="input" />
       </label>
       <label className="flex min-h-0 flex-1 flex-col">
         <span className="label">Mensagem</span>
@@ -282,7 +281,7 @@ function NewTicketForm({ onCreated }: { onCreated: (t: TicketSummary) => void })
           onChange={(e) => setMessage(e.target.value)}
           maxLength={MESSAGE_MAX}
           required
-          className={`${FIELD} min-h-32 flex-1 resize-none`}
+          className="input min-h-32 flex-1 resize-none"
         />
       </label>
       {error && (
@@ -290,7 +289,7 @@ function NewTicketForm({ onCreated }: { onCreated: (t: TicketSummary) => void })
           {error}
         </p>
       )}
-      <button type="submit" disabled={sending || !subject.trim() || !message.trim()} className={BTN_SOLID}>
+      <button type="submit" disabled={sending || !subject.trim() || !message.trim()} className="btn-primary">
         {sending ? <LoadingLabel>Enviando…</LoadingLabel> : "Abrir ticket"}
       </button>
     </form>
