@@ -18,12 +18,15 @@
     "check:design": "node scripts/check-design.mjs"
   },
   "dependencies": {
+    "@tailwindcss/typography": "^0.5.20",
     "@vitejs/plugin-react": "^6.1.1",
     "@vitejs/plugin-rsc": "^0.5.35",
     "bcryptjs": "^3.0.3",
+    "gray-matter": "^4.0.3",
     "jose": "^6.2.12",
     "jszip": "^3.10.2",
     "mongoose": "^9.10.3",
+    "next-mdx-remote": "^6.0.0",
     "pdfjs-dist": "^6.3.289",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

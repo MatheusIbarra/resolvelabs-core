@@ -1,0 +1,68 @@
+---
+title: "Como gerar CPFs e CNPJs válidos para testes e homologação"
+description: "Aprenda como funcionam os dígitos verificadores de CPF e CNPJ, veja o código para gerar e validar números de teste e conheça um gerador de dados BR no navegador."
+date: "2026-10-02"
+author: "Equipe ResolveLabs"
+---
+
+Ao testar um cadastro, uma integração ou um fluxo de checkout, você precisa de CPFs e CNPJs que **passem na validação** sem usar dados de pessoas reais. Este guia explica como esses números são formados e mostra como gerar os seus.
+
+## Como funciona o dígito verificador
+
+O CPF tem 11 dígitos: nove de base e dois dígitos verificadores. O CNPJ tem 14: doze de base (oito do número da empresa e quatro da filial) e dois verificadores. Os verificadores são calculados a partir dos dígitos anteriores com soma ponderada e módulo 11. Se qualquer dígito mudar, a validação falha.
+
+Dois cuidados:
+
+- Sequências de dígitos iguais (`111.111.111-11`) passam na conta, mas são rejeitadas pela regra comum de validação, então descarte-as.
+- Um número gerado aleatoriamente com verificadores corretos **pode pertencer a uma pessoa ou empresa real**. Use-o só em ambientes de teste e nunca em produção.
+
+## Código em TypeScript
+
+```ts
+function digitoCpf(base: number[]): number {
+  const peso = base.length + 1;
+  const soma = base.reduce((acc, d, i) => acc + d * (peso - i), 0);
+  const resto = (soma * 10) % 11;
+  return resto === 10 ? 0 : resto;
+}
+
+export function gerarCpf(): string {
+  const base = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10));
+  base.push(digitoCpf(base));
+  base.push(digitoCpf(base));
+  return base.join("");
+}
+
+export function cpfValido(cpf: string): boolean {
+  const d = cpf.replace(/\D/g, "").split("").map(Number);
+  if (d.length !== 11 || d.every((n) => n === d[0])) return false;
+  return digitoCpf(d.slice(0, 9)) === d[9] && digitoCpf(d.slice(0, 10)) === d[10];
+}
+
+function digitoCnpj(base: number[]): number {
+  const pesos = base.length === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const resto = base.reduce((acc, d, i) => acc + d * pesos[i], 0) % 11;
+  return resto < 2 ? 0 : 11 - resto;
+}
+
+export function cnpjValido(cnpj: string): boolean {
+  const d = cnpj.replace(/\D/g, "").split("").map(Number);
+  if (d.length !== 14 || d.every((n) => n === d[0])) return false;
+  return digitoCnpj(d.slice(0, 12)) === d[12] && digitoCnpj(d.slice(0, 13)) === d[13];
+}
+```
+
+Para checar a função, o CPF `529.982.247-25` e o CNPJ `11.222.333/0001-81` são válidos, e trocar o último dígito de qualquer um deles faz `cpfValido` e `cnpjValido` retornarem `false`.
+
+## Boas práticas em homologação
+
+- **Separe os ambientes:** dados de teste só em homologação.
+- **Gere em lote:** para testes de carga e importação, gere centenas de registros de uma vez, com CPF, CNPJ, CEP e chave PIX no mesmo JSON.
+- **Teste os casos de erro:** use um número com o último dígito alterado para garantir que a sua validação rejeita.
+- **Não reutilize dados pessoais reais** em testes, mesmo que "só dessa vez".
+
+## Gerador pronto no navegador
+
+Se você não quer manter esse código, o gerador de dados BR do ResolveLabs monta o JSON com CPFs e CNPJs válidos, CEPs e chaves PIX, direto no navegador.
+
+<ToolCta slug="mock-data-br">Escolha os campos, a quantidade e gere o JSON de teste. Tudo roda no seu navegador, com algumas gerações gratuitas por sessão.</ToolCta>

@@ -6,11 +6,12 @@ function hrefFor(index: number, total: number): string | null {
   return index === 0 ? "/" : "/ferramentas";
 }
 
-export default function Breadcrumbs({ items }: { items: string[] }) {
+/** `hrefs` (mesmo tamanho de `items`) substitui o padrão Home → "/" e categorias → "/ferramentas". */
+export default function Breadcrumbs({ items, hrefs }: { items: string[]; hrefs?: (string | null)[] }) {
   return (
     <nav aria-label="Breadcrumb" className="page-container flex flex-wrap items-center gap-2 py-5 text-sm text-stone-500">
       {items.map((item, i) => {
-        const href = hrefFor(i, items.length);
+        const href = hrefs ? (i === items.length - 1 ? null : hrefs[i] ?? null) : hrefFor(i, items.length);
         return (
           <span key={item} className="flex items-center gap-2">
             {i > 0 && <span aria-hidden>/</span>}

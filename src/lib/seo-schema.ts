@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { absoluteUrl } from "./site";
 import type { SeoTool } from "./seo-tools";
+import type { PostMeta } from "./blog";
 
 const BRAND = "ResolveLabs";
 
@@ -56,6 +57,36 @@ export function faqPageSchema(tool: SeoTool) {
       name: item.q,
       acceptedAnswer: { "@type": "Answer", text: item.a },
     })),
+  };
+}
+
+export function blogPostingSchema(post: PostMeta) {
+  const url = absoluteUrl(`/blog/${post.slug}`);
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.description,
+    datePublished: post.date,
+    dateModified: post.updated ?? post.date,
+    inLanguage: "pt-BR",
+    url,
+    mainEntityOfPage: url,
+    image: absoluteUrl("/og-image.png"),
+    author: { "@type": "Organization", name: post.author },
+    publisher: { "@type": "Organization", name: BRAND, url: absoluteUrl("/") },
+  };
+}
+
+export function blogBreadcrumbSchema(post: PostMeta) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "Blog", item: absoluteUrl("/blog") },
+      { "@type": "ListItem", position: 3, name: post.title, item: absoluteUrl(`/blog/${post.slug}`) },
+    ],
   };
 }
 

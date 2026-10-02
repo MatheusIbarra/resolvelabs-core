@@ -1,0 +1,50 @@
+---
+title: "Como resolver o erro de importação de extrato PDF no Domínio Sistemas"
+description: "Por que o Domínio não importa extrato bancário em PDF, quais formatos ele aceita (OFX, OFC e Febraban) e como converter o PDF em OFX para importar."
+date: "2026-10-02"
+author: "Equipe ResolveLabs"
+---
+
+Você baixou o extrato do cliente, tentou importar no Domínio e o arquivo não foi aceito. Quando o arquivo é um PDF, o motivo costuma ser simples: a importação de extrato bancário trabalha com formatos estruturados, não com PDF.
+
+> O ResolveLabs não tem vínculo com a Domínio Sistemas nem com a Thomson Reuters. Este guia usa informações da central de ajuda pública da Domínio e pode ficar desatualizado conforme a versão do sistema.
+
+## Quais formatos o Domínio aceita
+
+Segundo a [central de atendimento da Domínio](https://suporte.dominioatendimento.com/central/faces/solucao.html?codigo=238), a importação de extrato bancário aceita os layouts **OFX**, **OFC** e **Febraban 240**. PDF não está entre eles.
+
+Isso faz sentido: o PDF mostra o extrato visualmente, mas não separa data, valor e descrição de forma que um sistema consiga ler com segurança. Já o OFX traz cada lançamento com os campos identificados.
+
+## Como importar o extrato (passo a passo)
+
+De acordo com a mesma central de ajuda, o caminho é o menu **Utilitários > Importar > Extrato bancário**. Os nomes podem variar conforme a versão do seu sistema, mas o fluxo é este:
+
+1. Informe o **período** do extrato.
+2. Informe a **conta contábil do banco**.
+3. Se a empresa tiver filial, informe o código da empresa.
+4. Escolha o **tipo de layout** (OFX, por exemplo).
+5. Localize o arquivo e importe. Confira os lançamentos exibidos e salve.
+
+## Detalhes que evitam dor de cabeça
+
+- **Histórico:** o Domínio usa a tag `MEMO` do OFX como histórico do lançamento e, na falta dela, usa a `NAME`. Um OFX com os dois campos vazios gera lançamentos sem descrição.
+- **Período:** a central indica que o período de importação é limitado a **12 meses**. Se o extrato for maior, divida em arquivos.
+
+## O que fazer quando você só tem o PDF
+
+1. **Peça o OFX ao banco primeiro.** Muitos internet bankings oferecem a opção de exportar o extrato em OFX. Procure por "exportar" ou "salvar em outros formatos" na tela de extrato.
+2. **Se o banco só fornece PDF**, converta o PDF em OFX antes de importar.
+
+<ToolCta slug="conversor-pdf-para-ofx">Converta o extrato em PDF para OFX no navegador: o PDF não passa pelos nossos servidores. É preciso uma conta gratuita, e algumas conversões estão incluídas sem custo.</ToolCta>
+
+Se o seu banco tem página própria, os guias abaixo trazem o passo a passo de exportação:
+
+- [Extrato do Nubank em OFX](/ferramentas/pdf-para-ofx-nubank)
+- [Extrato do Itaú em OFX](/ferramentas/pdf-para-ofx-itau)
+- [Extrato do Bradesco em OFX](/ferramentas/pdf-para-ofx-bradesco)
+
+## Confira o OFX antes de importar
+
+Depois de gerar ou baixar o arquivo, abra-o antes de importar. Veja se o período, o saldo e a quantidade de lançamentos batem com o extrato original. Qualquer conversão automática de PDF depende do layout do banco, então a conferência é responsabilidade de quem importa.
+
+<ToolCta slug="visualizador-ofx">Abra o OFX e confira saldo e lançamentos antes de importar no Domínio.</ToolCta>

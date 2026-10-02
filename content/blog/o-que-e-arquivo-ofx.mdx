@@ -1,0 +1,59 @@
+---
+title: "O que é um arquivo OFX e como abri-lo sem instalar programa"
+description: "Entenda o que é o formato OFX dos extratos bancários, o que há dentro dele e como abrir e conferir um arquivo OFX direto no navegador, sem instalar nada."
+date: "2026-10-02"
+author: "Equipe ResolveLabs"
+---
+
+Se você já baixou um extrato do banco e recebeu um arquivo terminado em `.ofx`, provavelmente clicou duas vezes e nada útil aconteceu. Isso é normal: OFX não foi feito para ser lido por uma pessoa, e sim por um sistema.
+
+## O que é OFX
+
+OFX (Open Financial Exchange) é um formato de troca de dados financeiros. Os bancos o usam para exportar extratos de forma estruturada, e sistemas contábeis, ERPs e programas de conciliação bancária o usam para importar esses lançamentos sem digitação.
+
+Na prática, o arquivo é um texto com campos marcados por etiquetas (tags). Para cada lançamento, ele guarda informações como:
+
+- **Tipo** do lançamento (`TRNTYPE`), por exemplo débito ou crédito.
+- **Data** em que foi lançado (`DTPOSTED`).
+- **Valor** (`TRNAMT`), com sinal negativo para saídas.
+- **Identificador único** da transação (`FITID`), que ajuda o sistema a não importar o mesmo lançamento duas vezes.
+- **Descrição** (`MEMO` ou `NAME`).
+
+Também há o saldo da conta (`BALAMT`) e o período coberto pelo extrato.
+
+## Por que o OFX é diferente de um PDF
+
+O PDF do extrato é apenas visual: serve para uma pessoa ler. Um sistema contábil não consegue, de forma confiável, identificar o que é data, valor e descrição ali. O OFX entrega esses campos separados, por isso é o formato padrão para importar extratos.
+
+## Como abrir um arquivo OFX
+
+Existem três caminhos:
+
+1. **Importar no sistema contábil ou financeiro.** É o uso pretendido, mas não serve para só conferir o conteúdo.
+2. **Abrir em um editor de texto.** Funciona, porque OFX é texto, mas você vê um bloco de etiquetas difícil de ler, principalmente em extratos longos.
+3. **Abrir em um visualizador no navegador.** Mostra a conta, o período, o saldo e os lançamentos em tabela, sem instalar programa.
+
+<ToolCta slug="visualizador-ofx">Escolha o arquivo OFX e veja o extrato em tabela. A leitura acontece no seu navegador: o arquivo não passa pelos nossos servidores.</ToolCta>
+
+## Quando vale conferir o OFX antes de importar
+
+Abrir o arquivo antes de importar evita retrabalho. Confira principalmente:
+
+- se o **período** é o que você esperava;
+- se o **saldo final** bate com o do banco;
+- se a quantidade de **lançamentos** faz sentido;
+- se as **descrições** não estão vazias.
+
+## E se eu só tenho o extrato em PDF?
+
+Alguns bancos só oferecem o extrato em PDF para certos períodos ou tipos de conta. Nesses casos, é possível converter o PDF em OFX. Veja o guia do conversor de PDF para OFX para o passo a passo.
+
+<ToolCta slug="conversor-pdf-para-ofx">Converta o extrato em PDF para OFX no navegador. É preciso uma conta gratuita, e algumas conversões estão incluídas sem custo.</ToolCta>
+
+## Perguntas rápidas
+
+**OFX e CSV são a mesma coisa?** Não. O CSV é uma tabela simples e cada banco monta as colunas do seu jeito. O OFX segue um padrão com campos definidos, o que facilita a importação automática.
+
+**O visualizador altera o meu arquivo?** Não. Ele apenas lê e exibe o conteúdo.
+
+**Dá para abrir no celular?** Sim, pelo navegador.

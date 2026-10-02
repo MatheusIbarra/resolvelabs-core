@@ -13,6 +13,7 @@ export default function Header() {
         </Link>
         <nav className="hidden items-center gap-8 md:flex">
           <Link href="/ferramentas" className={NAV_LINK}>Ferramentas</Link>
+          <Link href="/blog" className={NAV_LINK}>Blog</Link>
           <Link href="/checkout" className={NAV_LINK}>Preços</Link>
         </nav>
         <div className="flex items-center gap-3">
