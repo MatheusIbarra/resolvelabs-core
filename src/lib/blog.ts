@@ -3,6 +3,7 @@
 // Os arquivos são EMBUTIDOS no build (import.meta.glob) em vez de lidos com `fs` em runtime:
 // em deploys serverless (Nitro/Vercel) a pasta content/ não acompanha a função do servidor.
 import matter from "gray-matter";
+import { resolveToolLink, validToolSlugs } from "./tool-links";
 
 export interface PostMeta {
   slug: string;
@@ -52,6 +53,10 @@ function parse(path: string, raw: string): (Post & { draft: boolean }) | null {
     content,
     draft: data.draft === true,
   };
+  // Falha cedo (sitemap, listagem e artigo) se algum <ToolCta slug="..."> apontar para página que não é pública.
+  for (const m of content.matchAll(/<ToolCta\s+slug="([^"]+)"/g)) {
+    if (!resolveToolLink(m[1])) throw new Error(`[blog] ${file}: <ToolCta slug="${m[1]}"> inválido. Válidos: ${validToolSlugs().join(", ")}`);
+  }
   return post;
 }
 
