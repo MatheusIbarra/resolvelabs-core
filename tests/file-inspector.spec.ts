@@ -17,7 +17,16 @@ test.describe("Inspetor Universal de Arquivos", () => {
     await expect(page.getByRole("heading", { name: "Inspetor Universal de Arquivos" })).toBeVisible();
     // Privacidade: depois de abrir a página, nenhuma requisição não-GET pode sair (nada de upload).
     nonGetRequests = [];
-    page.on("request", (r) => r.method() !== "GET" && nonGetRequests.push(`${r.method()} ${r.url()}`));
+    // Exceção: o contador anônimo de uso (/api/track) leva só { tool, event, kind }, nunca nome ou conteúdo do arquivo.
+    page.on("request", (r) => {
+      if (r.method() === "GET") return;
+      if (new URL(r.url()).pathname === "/api/track") {
+        const body = r.postData(); // sendBeacon pode não expor o corpo ao Playwright; quando expõe, só { tool, event, kind } é aceito
+        if (body) expect(body, "o contador não pode levar dados do arquivo").toMatch(/^\{"tool":"[a-z-]+","event":"(view|use)"(,"kind":"[a-z]+")?\}$/);
+        return;
+      }
+      nonGetRequests.push(`${r.method()} ${r.url()}`);
+    });
   });
 
   test.afterEach(() => {
