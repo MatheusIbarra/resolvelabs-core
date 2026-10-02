@@ -16,7 +16,42 @@ export function decodeText(buffer: ArrayBuffer): string {
   }
 }
 
-/** CSV/TSV: decodifica (UTF-8 ou Windows-1252) e detecta o separador (; , tab) pela primeira linha. */
+/** Conta, por linha, as ocorrências de cada separador fora de aspas. */
+function separatorCounts(line: string): Record<string, number> {
+  const counts: Record<string, number> = { ";": 0, ",": 0, "\t": 0, "|": 0 };
+  let quoted = false;
+  for (const ch of line) {
+    if (ch === '"') quoted = !quoted;
+    else if (!quoted && ch in counts) counts[ch]++;
+  }
+  return counts;
+}
+
+/**
+ * Escolhe o separador pelo conjunto das primeiras linhas, não só pela primeira: extratos de banco costumam abrir com
+ * títulos sem separador ("Extrato Conta Corrente") antes da tabela. Vence o separador cuja contagem se repete em mais linhas.
+ * Em empate, prefere tab, ponto e vírgula e barra vertical à vírgula (que também aparece dentro de números como 1.234,56).
+ */
+export function detectSeparator(text: string): string {
+  const lines = text.split(/\r?\n/).filter((l) => l.trim() !== "").slice(0, 40);
+  let best = ",";
+  let bestScore = 0;
+  for (const sep of ["\t", ";", "|", ","]) {
+    const perLine = lines.map((l) => separatorCounts(l)[sep]).filter((n) => n > 0);
+    const freq = new Map<number, number>();
+    for (const n of perLine) freq.set(n, (freq.get(n) ?? 0) + 1);
+    for (const [count, lineCount] of freq) {
+      const score = lineCount * count;
+      if (score > bestScore) {
+        bestScore = score;
+        best = sep;
+      }
+    }
+  }
+  return best;
+}
+
+/** CSV/TSV: decodifica (UTF-8 ou Windows-1252) e detecta o separador (; , tab |). */
 export function decodeDelimited(buffer: ArrayBuffer): { text: string; separator: string } {
   let text: string;
   try {
@@ -24,14 +59,6 @@ export function decodeDelimited(buffer: ArrayBuffer): { text: string; separator:
   } catch {
     text = new TextDecoder("windows-1252").decode(buffer);
   }
-  text = text.replace(/^﻿/, "");
-  const firstLine = text.slice(0, 4096).split(/\r?\n/, 1)[0] ?? "";
-  const counts = { ";": 0, ",": 0, "\t": 0, "|": 0 };
-  let quoted = false;
-  for (const ch of firstLine) {
-    if (ch === '"') quoted = !quoted;
-    else if (!quoted && ch in counts) counts[ch as keyof typeof counts]++;
-  }
-  const separator = (Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] as string) || ",";
-  return { text, separator: counts[separator as keyof typeof counts] === 0 ? "," : separator };
+  text = text.replace(/^\uFEFF/, "");
+  return { text, separator: detectSeparator(text) };
 }

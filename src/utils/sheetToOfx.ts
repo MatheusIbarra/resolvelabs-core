@@ -13,8 +13,10 @@ export type Cell = string | number | boolean | Date | null | undefined;
 
 export interface SheetData {
   name: string;
-  /** Linhas retangulares com os valores brutos (números do Excel continuam números). */
+  /** Linhas retangulares com os valores brutos (números do Excel continuam números). Linhas em branco são mantidas. */
   rows: Cell[][];
+  /** Número, na planilha, da primeira linha de `rows` (a aba pode não começar na linha 1). */
+  firstRow: number;
 }
 
 export class SheetReadError extends Error {
@@ -54,11 +56,12 @@ export async function readSheets(file: File): Promise<Workbook> {
   for (const name of workbook.SheetNames) {
     const ws = workbook.Sheets[name];
     if (!ws?.["!ref"]) continue;
-    const rows = XLSX.utils.sheet_to_json<Cell[]>(ws, { header: 1, raw: true, defval: "", blankrows: false });
-    if (rows.length === 0) continue;
+    const rows = XLSX.utils.sheet_to_json<Cell[]>(ws, { header: 1, raw: true, defval: "", blankrows: true });
+    if (rows.every((r) => r.every((c) => String(c ?? "").trim() === ""))) continue;
     if (rows.length > MAX_ROWS + 1) throw new SheetReadError(`A planilha "${name}" tem mais de ${MAX_ROWS.toLocaleString("pt-BR")} linhas. Divida o arquivo.`);
     const width = Math.max(...rows.map((r) => r.length));
-    sheets.push({ name, rows: rows.map((r) => Array.from({ length: width }, (_, c) => r[c] ?? "")) });
+    const firstRow = XLSX.utils.decode_range(ws["!ref"]).s.r + 1;
+    sheets.push({ name, firstRow, rows: rows.map((r) => Array.from({ length: width }, (_, c) => r[c] ?? "")) });
   }
   if (sheets.length === 0) throw new SheetReadError("A planilha está vazia.");
   const serialToParts = (serial: number) => {
@@ -95,28 +98,117 @@ export function columnLabel(index: number): string {
 
 const text = (c: Cell) => (c instanceof Date ? "" : String(c ?? "").trim());
 
-/** Rótulos das colunas: o cabeçalho (se houver) ou "Coluna A", "Coluna B"… */
-export function columnLabels(sheet: SheetData, hasHeader: boolean): string[] {
-  return (sheet.rows[0] ?? []).map((cell, i) => {
-    const header = hasHeader ? text(cell) : "";
+const MAX_HEADER_CANDIDATES = 30;
+
+/** Rótulos das colunas: o texto da linha de cabeçalho (se houver) ou "Coluna A", "Coluna B"… `headerRow` = índice em `rows`, -1 = sem cabeçalho. */
+export function columnLabels(sheet: SheetData, headerRow: number): string[] {
+  const width = sheet.rows[0]?.length ?? 0;
+  return Array.from({ length: width }, (_, i) => {
+    const header = headerRow >= 0 ? text(sheet.rows[headerRow]?.[i]) : "";
     return header ? `${columnLabel(i)} · ${header}` : `Coluna ${columnLabel(i)}`;
   });
 }
 
-const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const isEmptyRow = (row: Cell[]) => row.every((c) => text(c) === "");
 
-/** Sugere o mapeamento a partir dos nomes do cabeçalho. */
-export function suggestMapping(headers: string[]): Mapping {
-  const find = (re: RegExp, taken: number[]) => {
+/** Data "de verdade" (usada para achar a tabela): texto em formato de data, ou serial do Excel só entre os anos 2000 e 2100 (assim "2026" ou um nº de conta não viram data). */
+function strictDate(cell: Cell, serialToParts?: Workbook["serialToParts"]): boolean {
+  if (typeof cell === "number" && (cell < 36526 || cell > 73415)) return false;
+  return parseDateCell(cell, serialToParts) !== null;
+}
+
+/** Linhas candidatas a cabeçalho: as primeiras não vazias (para o seletor da tela). */
+export function headerCandidates(sheet: SheetData): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < Math.min(sheet.rows.length, 60) && out.length < MAX_HEADER_CANDIDATES; i++) if (!isEmptyRow(sheet.rows[i])) out.push(i);
+  return out;
+}
+
+const HEADER_WORDS = /\b(data|date|descri|historico|lancamento|valor|amount|debito|credito|entrada|saida)/;
+
+/**
+ * Acha a linha do cabeçalho: a linha de texto logo acima da primeira linha com data.
+ * Extratos de banco costumam ter título e dados da conta antes da tabela. Devolve -1 se a tabela começa sem cabeçalho.
+ */
+export function detectHeaderRow(sheet: SheetData, serialToParts?: Workbook["serialToParts"]): number {
+  const limit = Math.min(sheet.rows.length, 80);
+  let firstData = -1;
+  for (let r = 0; r < limit && firstData < 0; r++) if (sheet.rows[r].some((c) => strictDate(c, serialToParts))) firstData = r;
+  if (firstData >= 0) {
+    for (let r = firstData - 1; r >= 0; r--) {
+      const row = sheet.rows[r];
+      if (isEmptyRow(row)) continue;
+      const filled = row.filter((c) => text(c) !== "").length;
+      return filled >= 2 ? r : -1; // uma linha só com 1 célula é título, não cabeçalho
+    }
+    return -1;
+  }
+  // Nenhuma data reconhecida (formato incomum): procura uma linha com palavras de cabeçalho.
+  for (let r = 0; r < limit; r++) {
+    if (sheet.rows[r].filter((c) => typeof c === "string" && HEADER_WORDS.test(norm(c))).length >= 2) return r;
+  }
+  return 0;
+}
+
+const BALANCE = /saldo|balance|total/;
+
+/** Para a coluna `col`, o aproveitamento das linhas de amostra como data, valor e texto. */
+function columnProfile(rows: Cell[][], col: number, serialToParts?: Workbook["serialToParts"]) {
+  let filled = 0;
+  let dates = 0;
+  let amounts = 0;
+  let textLen = 0;
+  let texts = 0;
+  for (const row of rows) {
+    const cell = row[col];
+    if (text(cell) === "") continue;
+    filled++;
+    if (strictDate(cell, serialToParts)) dates++;
+    else if (parseAmountCell(cell, "br") !== null || parseAmountCell(cell, "us") !== null) amounts++;
+    else {
+      texts++;
+      textLen += text(cell).length;
+    }
+  }
+  const ratio = (n: number) => (filled === 0 ? 0 : n / filled);
+  return { dateRatio: ratio(dates), amountRatio: ratio(amounts), textRatio: ratio(texts), avgText: texts ? textLen / texts : 0, filled };
+}
+
+/** Sugere o mapeamento pelos nomes do cabeçalho e, onde ele não ajuda, pelo conteúdo das colunas. */
+export function suggestMapping(sheet: SheetData, headerRow: number, serialToParts?: Workbook["serialToParts"]): Mapping {
+  const headers = headerRow >= 0 ? columnLabels(sheet, headerRow) : [];
+  const width = sheet.rows[0]?.length ?? 0;
+  const find = (re: RegExp, taken: (number | null)[]) => {
     const i = headers.findIndex((h, idx) => !taken.includes(idx) && re.test(norm(h)));
     return i >= 0 ? i : null;
   };
-  const date = find(/\b(data|date|dt|dia)\b|^data/, []);
-  const description = find(/descri|historico|memo|lancamento|detalhe|favorecido|estabelecimento|nome/, date === null ? [] : [date]);
-  const taken = [date, description].filter((n): n is number => n !== null);
-  const amount = find(/valor|amount|quantia|montante|value/, taken);
-  const debit = find(/debito|saida|debit/, taken);
-  const credit = find(/credito|entrada|credit/, taken);
+  let date = find(/\b(data|date|dt|dia)\b|^data/, []);
+  let description = find(/descri|historico|memo|lancamento|detalhe|favorecido|estabelecimento|nome/, [date]);
+  let amount = find(/valor|amount|quantia|montante|value/, [date, description]);
+  const debit = find(/debito|saida|debit/, [date, description, amount]);
+  const credit = find(/credito|entrada|credit/, [date, description, amount]);
+
+  // Conteúdo: usa uma amostra das linhas de dados.
+  const body = sheet.rows.slice(headerRow + 1).filter((r) => !isEmptyRow(r)).slice(0, 100);
+  const profiles = Array.from({ length: width }, (_, c) => columnProfile(body, c, serialToParts));
+  const free = (c: number) => ![date, description, amount, debit, credit].includes(c);
+
+  if (date === null) {
+    const best = profiles.map((p, c) => ({ c, v: p.dateRatio })).filter((x) => x.v >= 0.6).sort((a, b) => b.v - a.v)[0];
+    if (best) date = best.c;
+  }
+  if (amount === null && debit === null && credit === null) {
+    const best = profiles.findIndex((p, c) => free(c) && c !== date && p.amountRatio >= 0.6 && !(headers[c] && BALANCE.test(norm(headers[c]))));
+    if (best >= 0) amount = best;
+  }
+  if (description === null) {
+    const best = profiles
+      .map((p, c) => ({ c, v: p.avgText, ok: p.textRatio >= 0.6 }))
+      .filter((x) => x.ok && free(x.c) && x.c !== date)
+      .sort((a, b) => b.v - a.v)[0];
+    if (best) description = best.c;
+  }
   return { date, description, amount, debit, credit };
 }
 
@@ -210,7 +302,8 @@ function roundCents(n: number): number {
 
 export interface BuildOptions {
   sheet: SheetData;
-  hasHeader: boolean;
+  /** Índice da linha do cabeçalho em `sheet.rows`; -1 = sem cabeçalho. */
+  headerRow: number;
   mapping: Mapping;
   amountMode: AmountMode;
   numberFormat: NumberFormat;
@@ -240,9 +333,9 @@ export function cleanDescription(raw: Cell): string {
 }
 
 export function buildTransactions(opts: BuildOptions): BuildResult {
-  const { sheet, hasHeader, mapping, amountMode, invertSign } = opts;
-  const body = sheet.rows.slice(hasHeader ? 1 : 0);
-  const offset = hasHeader ? 2 : 1;
+  const { sheet, headerRow, mapping, amountMode, invertSign } = opts;
+  const body = sheet.rows.slice(headerRow + 1);
+  const offset = sheet.firstRow + headerRow + 1; // número real da linha na planilha
   const amountCols = amountMode === "single" ? [mapping.amount] : [mapping.debit, mapping.credit];
   const numericCols = amountCols.filter((c): c is number => c !== null);
 

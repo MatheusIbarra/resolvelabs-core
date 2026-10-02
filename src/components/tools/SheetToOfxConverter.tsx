@@ -8,7 +8,8 @@ import {
   SheetReadError,
   buildTransactions,
   columnLabels,
-  parseDateCell,
+  detectHeaderRow,
+  headerCandidates,
   readSheets,
   suggestMapping,
   summarize,
@@ -64,7 +65,7 @@ export default function SheetToOfxConverter() {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
 
   const [sheetIndex, setSheetIndex] = useState(0);
-  const [hasHeader, setHasHeader] = useState(true);
+  const [headerRow, setHeaderRow] = useState(-1);
   const [mapping, setMapping] = useState<Mapping>({ date: null, description: null, amount: null, debit: null, credit: null });
   const [amountMode, setAmountMode] = useState<AmountMode>("single");
   const [numberFormat, setNumberFormat] = useState<NumberFormat>("auto");
@@ -73,12 +74,13 @@ export default function SheetToOfxConverter() {
   const [accountId, setAccountId] = useState("");
 
   const sheet = loaded?.workbook.sheets[sheetIndex];
-  const labels = useMemo(() => (sheet ? columnLabels(sheet, hasHeader) : []), [sheet, hasHeader]);
+  const labels = useMemo(() => (sheet ? columnLabels(sheet, headerRow) : []), [sheet, headerRow]);
+  const candidates = useMemo(() => (sheet ? headerCandidates(sheet) : []), [sheet]);
 
-  /** Aplica a sugestão de mapeamento para a aba/cabeçalho atuais. */
-  const applySuggestion = (nextSheet: typeof sheet, header: boolean) => {
+  /** Aplica a sugestão de mapeamento (pelo cabeçalho e pelo conteúdo das colunas) para a aba/linha de cabeçalho atuais. */
+  const applySuggestion = (nextSheet: typeof sheet, header: number, book: Workbook | undefined = loaded?.workbook) => {
     if (!nextSheet) return;
-    const m = suggestMapping(header ? columnLabels(nextSheet, true) : []);
+    const m = suggestMapping(nextSheet, header, book?.serialToParts);
     setMapping(m);
     setAmountMode(m.amount === null && (m.debit !== null || m.credit !== null) ? "split" : "single");
   };
@@ -90,14 +92,14 @@ export default function SheetToOfxConverter() {
     try {
       const workbook = await readSheets(file);
       const first = workbook.sheets[0];
-      // Se a primeira linha já tem uma data, a planilha não tem cabeçalho.
-      const header = !first.rows[0].some((c) => parseDateCell(c, workbook.serialToParts) !== null);
+      // A tabela pode começar depois de títulos e dados da conta: acha a linha do cabeçalho pelo conteúdo.
+      const header = detectHeaderRow(first, workbook.serialToParts);
       setLoaded({ fileName: file.name, workbook });
       setSheetIndex(0);
-      setHasHeader(header);
+      setHeaderRow(header);
       setNumberFormat("auto");
       setInvertSign(false);
-      applySuggestion(first, header);
+      applySuggestion(first, header, workbook);
     } catch (err) {
       const message = err instanceof SheetReadError ? err.message : errorMessage(err, MSG.sheetOfx.readFailed);
       setError(message);
@@ -116,8 +118,20 @@ export default function SheetToOfxConverter() {
 
   const built = useMemo(() => {
     if (!sheet || !loaded || !ready) return null;
-    return buildTransactions({ sheet, hasHeader, mapping, amountMode, numberFormat, invertSign, serialToParts: loaded.workbook.serialToParts });
-  }, [sheet, loaded, ready, hasHeader, mapping, amountMode, numberFormat, invertSign]);
+    return buildTransactions({ sheet, headerRow, mapping, amountMode, numberFormat, invertSign, serialToParts: loaded.workbook.serialToParts });
+  }, [sheet, loaded, ready, headerRow, mapping, amountMode, numberFormat, invertSign]);
+
+  // O que ainda falta para liberar o download (sempre dito na tela, nunca um beco sem saída).
+  const missing: string[] = [];
+  if (mapping.date === null) missing.push("a coluna de Data");
+  if (!hasAmount) missing.push(amountMode === "single" ? "a coluna de Valor" : "a coluna de Débito ou Crédito");
+  const skipReasons = built
+    ? Object.entries(built.skipped.reduce<Record<string, number>>((acc, r) => ({ ...acc, [r.reason]: (acc[r.reason] ?? 0) + 1 }), {}))
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([reason, n]) => `${n.toLocaleString("pt-BR")} com ${reason}`)
+        .join(", ")
+    : "";
 
   const summary = built ? summarize(built.transactions) : null;
   const accountOk = validAccountField(bankId) && validAccountField(accountId);
@@ -208,7 +222,10 @@ export default function SheetToOfxConverter() {
                   onChange={(e) => {
                     const i = Number(e.target.value);
                     setSheetIndex(i);
-                    applySuggestion(loaded.workbook.sheets[i], hasHeader);
+                    const nextSheet = loaded.workbook.sheets[i];
+                    const header = detectHeaderRow(nextSheet, loaded.workbook.serialToParts);
+                    setHeaderRow(header);
+                    applySuggestion(nextSheet, header);
                   }}
                 >
                   {loaded.workbook.sheets.map((s, i) => (
@@ -217,18 +234,26 @@ export default function SheetToOfxConverter() {
                 </select>
               </div>
             )}
-            <label className="flex items-center gap-2 text-sm text-stone-700">
-              <input
-                type="checkbox"
-                className="h-4 w-4 accent-teal-700"
-                checked={hasHeader}
+            <div className="flex items-center gap-2">
+              <label htmlFor="header-row" className="text-sm text-stone-600">Linha do cabeçalho</label>
+              <select
+                id="header-row"
+                className="input !w-auto max-w-[18rem] !py-1.5"
+                value={headerRow}
                 onChange={(e) => {
-                  setHasHeader(e.target.checked);
-                  applySuggestion(sheet, e.target.checked);
+                  const row = Number(e.target.value);
+                  setHeaderRow(row);
+                  applySuggestion(sheet, row);
                 }}
-              />
-              A primeira linha é o cabeçalho
-            </label>
+              >
+                <option value={-1}>Sem cabeçalho</option>
+                {candidates.map((i) => (
+                  <option key={i} value={i}>
+                    Linha {sheet!.firstRow + i}: {sheet!.rows[i].filter((c) => String(c ?? "").trim() !== "").slice(0, 3).join(", ").slice(0, 40)}
+                  </option>
+                ))}
+              </select>
+            </div>
             <button className="btn-secondary btn-sm ml-auto" onClick={reset}>Trocar arquivo</button>
           </div>
 
@@ -292,9 +317,17 @@ export default function SheetToOfxConverter() {
 
           <section className="card p-6" aria-labelledby="check-title">
             <h2 id="check-title" className="section-title mb-1">3. Conferência e download</h2>
-            {!ready || !built ? (
-              <p className="text-sm text-stone-600">Escolha as colunas de data e valor para ver a prévia.</p>
-            ) : (
+            {missing.length > 0 && (
+              <Alert variant="warning" className="mt-4">
+                Falta escolher {missing.join(" e ")}.{" "}
+                <a href="#map-title" className="font-medium underline">Ir para o mapeamento</a>
+              </Alert>
+            )}
+            {hasDuplicates && missing.length === 0 && (
+              <Alert variant="warning" className="mt-4">{MSG.sheetOfx.duplicateColumns}</Alert>
+            )}
+
+            {ready && built && (
               <>
                 {summary ? (
                   <dl className="mb-5 mt-4 grid gap-4 sm:grid-cols-4" data-testid="sheet-summary">
@@ -311,7 +344,9 @@ export default function SheetToOfxConverter() {
                     ))}
                   </dl>
                 ) : (
-                  <Alert variant="warning" className="mt-4">Nenhuma linha válida com este mapeamento. Revise as colunas de data e valor.</Alert>
+                  <Alert variant="warning" className="mt-4">
+                    Nenhuma linha válida com este mapeamento{skipReasons ? ` (${skipReasons})` : ""}. Confira a linha do cabeçalho e as colunas de data e valor.
+                  </Alert>
                 )}
 
                 {built.transactions.length > 0 && (
@@ -341,17 +376,22 @@ export default function SheetToOfxConverter() {
                 {built.skipped.length > 0 && (
                   <Alert variant="warning" title={`${built.skipped.length.toLocaleString("pt-BR")} linha${built.skipped.length === 1 ? "" : "s"} ignorada${built.skipped.length === 1 ? "" : "s"}`} className="mb-5">
                     <span data-testid="sheet-skipped">
-                      {built.skipped.slice(0, 5).map((s) => `linha ${s.row} (${s.reason})`).join("; ")}
+                      {built.skipped.slice(0, 5).map((r) => `linha ${r.row} (${r.reason})`).join("; ")}
                       {built.skipped.length > 5 ? "…" : "."} Elas não entram no OFX.
                     </span>
                   </Alert>
                 )}
-
-                <button className="btn-primary px-5 py-3" onClick={generate} disabled={built.transactions.length === 0 || !accountOk} data-testid="sheet-generate">
-                  Gerar OFX e baixar
-                </button>
               </>
             )}
+
+            <button
+              className="btn-primary mt-4 px-5 py-3"
+              onClick={generate}
+              disabled={!built || built.transactions.length === 0 || !accountOk}
+              data-testid="sheet-generate"
+            >
+              Gerar OFX e baixar
+            </button>
           </section>
         </>
       )}

@@ -9,7 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Só URLs que respondem 200 sem login (ver middleware). /ferramentas e as ferramentas PRO/com cota exigem login.
   const paths = ["/", ...publicToolPaths(), "/suporte", "/termos"];
   const pages: MetadataRoute.Sitemap = paths.map((path) => ({
-    url: absoluteUrl(path),
+    url: absoluteUrl(path).trim(),
     changeFrequency: path === "/" ? "weekly" : "monthly",
     priority: path === "/" ? 1 : path.startsWith("/ferramentas/") ? 0.8 : 0.3,
   }));
