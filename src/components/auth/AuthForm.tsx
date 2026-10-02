@@ -31,6 +31,14 @@ const COPY: Record<Mode, { title: string; description: string; submit: string; p
   },
 };
 
+/** Máscara brasileira: (XX) XXXXX-XXXX. */
+function maskPhone(value: string): string {
+  const d = value.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 2) return d.length ? `(${d}` : "";
+  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+}
+
 /** Só aceita caminhos internos para evitar open redirect. */
 function safeNext(): string {
   const next = new URLSearchParams(window.location.search).get("next");
@@ -53,6 +61,8 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const toast = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
@@ -78,8 +88,16 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     try {
       const credentials = { email, password };
       if (mode === "register") {
+        if (phone.replace(/\D/g, "").length !== 11) {
+          setError("Informe um celular válido com DDD: (XX) XXXXX-XXXX.");
+          return;
+        }
+        if (!termsAccepted) {
+          setError("É necessário aceitar os Termos de Uso.");
+          return;
+        }
         // A indicação vai no cookie resolvelabs_ref (definido pelo middleware em ?ref=CODIGO).
-        const registered = await post("/api/auth/register", credentials);
+        const registered = await post("/api/auth/register", { ...credentials, phone, termsAccepted });
         if (!registered.ok) {
           setError(registered.error ?? AUTH_MSG.network);
           return;
@@ -136,9 +154,41 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           className="input mb-5"
         />
 
+        {mode === "register" && (
+          <>
+            <label htmlFor="phone" className="label">Celular</label>
+            <input
+              id="phone"
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel-national"
+              required
+              value={phone}
+              onChange={(e) => setPhone(maskPhone(e.target.value))}
+              placeholder="(11) 91234-5678"
+              className="input mb-5 font-mono"
+            />
+
+            <label htmlFor="terms" className="mb-5 flex cursor-pointer items-start gap-3 border-2 border-stone-900 p-3 font-mono text-xs text-stone-900">
+              <input
+                id="terms"
+                type="checkbox"
+                required
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-stone-900"
+              />
+              <span>
+                Li e concordo com os{" "}
+                <Link href="/termos" target="_blank" className="font-semibold underline">Termos de Uso</Link>
+              </span>
+            </label>
+          </>
+        )}
+
         {error && <Alert variant="error" className="mb-5">{error}</Alert>}
 
-        <button type="submit" disabled={isPending || !email || !password} className="btn-primary w-full py-3">
+        <button type="submit" disabled={isPending || !email || !password || (mode === "register" && (!phone || !termsAccepted))} className="btn-primary w-full py-3">
           {isPending ? <LoadingLabel>{copy.pending}</LoadingLabel> : copy.submit}
         </button>
       </form>

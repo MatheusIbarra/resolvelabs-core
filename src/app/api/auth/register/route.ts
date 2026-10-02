@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
-import { isDuplicateKeyError, parseEmail, passwordError } from "@/lib/validation";
+import { isDuplicateKeyError, parseEmail, parsePhone, passwordError } from "@/lib/validation";
 import { clientIp, rateLimit } from "@/lib/rateLimit";
 import { generateAffiliateCode, parseAffiliateCode, REF_COOKIE } from "@/lib/affiliate";
 
@@ -23,12 +23,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Corpo da requisição inválido." }, { status: 400 });
   }
 
-  // Só lemos email, password e ref. Qualquer outro campo (ex.: role) é ignorado.
+  // Só lemos email, password, phone, termsAccepted e ref. Qualquer outro campo (ex.: role) é ignorado.
   const email = parseEmail(body?.email);
   if (!email) return NextResponse.json({ error: "E-mail inválido." }, { status: 400 });
 
   const pwError = passwordError(body?.password);
   if (pwError) return NextResponse.json({ error: pwError }, { status: 400 });
+
+  const phone = parsePhone(body?.phone);
+  if (!phone) return NextResponse.json({ error: "Celular inválido. Use o formato (XX) XXXXX-XXXX." }, { status: 400 });
+
+  if (body?.termsAccepted !== true) {
+    return NextResponse.json({ error: "É necessário aceitar os Termos de Uso." }, { status: 400 });
+  }
 
   try {
     await connectDB();
@@ -43,6 +50,9 @@ export async function POST(request: NextRequest) {
         const user = await User.create({
           email,
           password: hash,
+          phone,
+          termsAccepted: true,
+          termsAcceptedAt: new Date(),
           role: "free",
           usageCount: 0,
           affiliateCode: generateAffiliateCode(),

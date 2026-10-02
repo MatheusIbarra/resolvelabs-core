@@ -9,6 +9,11 @@ export interface IUser {
   /** Se definido, o acesso PRO concedido manualmente expira nesta data. Ausente = sem expiração. */
   planExpiresAt?: Date;
   usageCount: number;
+  /** Celular (somente dígitos, DDD + 9 dígitos). */
+  phone?: string;
+  /** Aceite dos Termos de Uso no cadastro. */
+  termsAccepted: boolean;
+  termsAcceptedAt?: Date;
   /** Código que este usuário divulga para indicar novos cadastros (ex.: "K7M2QX"). */
   affiliateCode?: string;
   /** Código do afiliado que indicou este usuário no cadastro. */
@@ -45,6 +50,16 @@ const UserSchema = new Schema<IUser>(
     role: { type: String, enum: ROLES, default: "free", required: true },
     planExpiresAt: { type: Date },
     usageCount: { type: Number, default: 0, min: 0 },
+    // Obrigatórios só na criação: contas anteriores ao campo continuam salvando normalmente.
+    phone: {
+      type: String,
+      trim: true,
+      required: function (this: { isNew: boolean }) {
+        return this.isNew;
+      },
+    },
+    termsAccepted: { type: Boolean, required: true, default: true },
+    termsAcceptedAt: { type: Date },
     affiliateCode: { type: String, unique: true, sparse: true, uppercase: true, trim: true },
     referredBy: { type: String, uppercase: true, trim: true, index: true },
     stripeCustomerId: { type: String, index: true, sparse: true },
