@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  /* fill-mode `backwards` (não `both`): ao terminar, o transform some e não vira containing block de modais `fixed`. */
+  /* Entrada de página: cada rota monta o próprio <main>, então a animação toca a cada navegação
+     sem animar o header nem a sidebar (que ficam fora do <main>). */
+  main {
+    animation: page-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Filhos diretos entram em cascata: use em grids/listas. */
+  .stagger > * {
+    animation: page-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+  .stagger > *:nth-child(1) { animation-delay: 40ms; }
+  .stagger > *:nth-child(2) { animation-delay: 90ms; }
+  .stagger > *:nth-child(3) { animation-delay: 140ms; }
+  .stagger > *:nth-child(4) { animation-delay: 190ms; }
+  .stagger > *:nth-child(5) { animation-delay: 240ms; }
+  .stagger > *:nth-child(n + 6) { animation-delay: 290ms; }
+  .card-interactive {
+    @apply transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md;
+  }
+  .page-container {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6;
+  }
+  .card {
+    @apply rounded-lg border border-stone-200 bg-white;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-all duration-150 enabled:active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-teal-700 text-white enabled:hover:bg-teal-800;
+  }
+  .btn-secondary {
+    @apply btn border border-stone-300 bg-white text-stone-800 enabled:hover:bg-stone-100;
+  }
+  .input {
+    @apply w-full rounded-md border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/20 disabled:bg-stone-100 disabled:text-stone-400;
+  }
+  /* Select com o mesmo visual do input: remove o estilo nativo e usa uma seta própria. */
+  select.input {
+    @apply appearance-none bg-no-repeat pr-9;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2378716c' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7.5l5 5 5-5'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-size: 1.1rem;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-stone-700;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
+  }
+  .badge-neutral {
+    @apply badge bg-stone-100 text-stone-700;
+  }
+  .badge-brand {
+    @apply badge bg-teal-50 text-teal-800;
+  }
+  .badge-warn {
+    @apply badge bg-amber-100 text-amber-800;
+  }
+  .section-title {
+    @apply text-base font-semibold text-stone-900;
+  }
+  .muted {
+    @apply text-sm text-stone-600;
+  }
+}

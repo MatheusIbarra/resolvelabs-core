@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResolveHub - PDF para OFX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-slate-700 min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <!-- Logo Icon -->
+                <svg class="w-7 h-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                </svg>
+                <span class="font-bold text-xl text-slate-900 tracking-tight">ResolveHub</span>
+            </div>
+            <nav class="hidden md:flex gap-6 text-sm font-medium text-slate-500">
+                <a href="#" class="hover:text-slate-900 transition">Todas as Ferramentas</a>
+                <a href="#" class="hover:text-slate-900 transition">Preços</a>
+                <a href="#" class="hover:text-slate-900 transition">API</a>
+            </nav>
+            <div class="flex items-center gap-4">
+                <a href="#" class="text-sm font-medium text-slate-500 hover:text-slate-900 transition">Login</a>
+                <button class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition shadow-sm">
+                    Assinar PRO
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-4xl mx-auto px-4 w-full py-12">
+        <!-- Breadcrumbs -->
+        <div class="text-xs text-slate-400 mb-10 flex items-center gap-2">
+            <span>Home</span> 
+            <span>></span> 
+            <span>Ferramentas Financeiras</span> 
+            <span>></span> 
+            <span class="text-indigo-600 font-medium">Conversor PDF para OFX</span>
+        </div>
+
+        <div class="text-center mb-12">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4 tracking-tight">Conversor de Extrato PDF para OFX</h1>
+            <p class="text-slate-500 max-w-2xl mx-auto text-lg">Automatize a conciliação bancária do seu sistema contábil. Processamento 100% seguro no seu navegador, sem envio de dados para servidores.</p>
+        </div>
+
+        <!-- Upload Zone -->
+        <div class="relative bg-white border-2 border-dashed border-gray-300 rounded-2xl p-12 text-center hover:border-indigo-400 hover:bg-indigo-50 transition duration-200 cursor-pointer group shadow-sm">
+            <!-- Badge de limite -->
+            <div class="absolute top-4 right-4 bg-gray-100 text-gray-600 text-xs font-semibold px-3 py-1.5 rounded-full border border-gray-200">
+                Uso gratuito: 1/3
+            </div>
+            
+            <svg class="mx-auto h-14 w-14 text-gray-400 group-hover:text-indigo-500 transition mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+            
+            <p class="text-xl font-semibold text-slate-700 mb-1">Arraste seu extrato em PDF aqui</p>
+            <p class="text-sm text-slate-500 mb-8">ou clique para buscar no computador</p>
+            
+            <p class="text-xs text-slate-400 mb-3 font-medium uppercase tracking-wider">Formatos Suportados</p>
+            <div class="flex justify-center gap-2 flex-wrap">
+                <span class="bg-purple-50 text-purple-700 text-xs font-medium px-3 py-1 rounded-md border border-purple-200">Nubank</span>
+                <span class="bg-orange-50 text-orange-700 text-xs font-medium px-3 py-1 rounded-md border border-orange-200">Inter</span>
+                <span class="bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1 rounded-md border border-blue-200">Itaú</span>
+                <span class="bg-red-50 text-red-700 text-xs font-medium px-3 py-1 rounded-md border border-red-200">Bradesco</span>
+            </div>
+        </div>
+        
+        <!-- Botão para demonstrar o Paywall -->
+        <div class="text-center mt-16">
+           <button id="demo-modal-btn" class="text-sm font-medium text-slate-400 hover:text-indigo-600 transition flex items-center justify-center gap-1 mx-auto">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                Simular Paywall (Ver modal)
+           </button>
+        </div>
+    </main>
+
+    <!-- Modal Paywall (Oculto por padrão) -->
+    <div id="paywall-modal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-[fade-in_0.2s_ease-out]">
+            <button id="close-modal" class="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition bg-gray-50 hover:bg-gray-100 rounded-full p-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <div class="w-14 h-14 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mb-6 mx-auto shadow-inner">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z"></path></svg>
+            </div>
+            
+            <h2 class="text-2xl font-bold text-center text-slate-900 mb-3 tracking-tight">Limite Gratuito Atingido</h2>
+            <p class="text-center text-slate-500 mb-8 leading-relaxed">Você usou suas 3 execuções gratuitas. Assine o ResolveHub PRO e ganhe acesso ilimitado a esta e a <span class="font-semibold text-slate-700">TODAS as ferramentas</span> da plataforma.</p>
+            
+            <ul class="space-y-4 mb-8 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <li class="flex items-center text-sm font-medium text-slate-700">
+                    <svg class="w-5 h-5 text-emerald-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                    Conversões infinitas de PDF para OFX
+                </li>
+                <li class="flex items-center text-sm font-medium text-slate-700">
+                    <svg class="w-5 h-5 text-emerald-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                    Acesso ao Validador de XML
+                </li>
+                <li class="flex items-center text-sm font-medium text-slate-700">
+                    <svg class="w-5 h-5 text-emerald-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                    Acesso ao Otimizador de Imagens
+                </li>
+            </ul>
+
+            <button class="w-full bg-indigo-600 text-white font-semibold py-3.5 rounded-xl hover:bg-indigo-700 transition shadow-md shadow-indigo-200">
+                Desbloquear Tudo por R$ 39,90/mês
+            </button>
+            
+            <div class="flex items-center justify-center gap-2 mt-5 text-xs text-slate-400 font-medium">
+                <svg class="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                Pagamento seguro via Stripe. Cancele com 1 clique.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Scripts simples para demonstrar o modal
+        document.getElementById('demo-modal-btn').addEventListener('click', () => {
+            document.getElementById('paywall-modal').classList.remove('hidden');
+        });
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.getElementById('paywall-modal').classList.add('hidden');
+        });
+        
+        // Fechar ao clicar fora do modal
+        document.getElementById('paywall-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('paywall-modal')) {
+                document.getElementById('paywall-modal').classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

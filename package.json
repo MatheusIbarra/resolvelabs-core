@@ -1,0 +1,46 @@
+{
+  "name": "resolve-labs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "vite build",
+    "start": "vinext start",
+    "typecheck": "tsc --noEmit",
+    "db:up": "docker compose up -d mongo",
+    "db:down": "docker compose down",
+    "dev:app": "vinext dev",
+    "make-admin": "node scripts/make-admin.mjs",
+    "stripe:end-trial": "node scripts/stripe-test.mjs end-trial",
+    "stripe:cancel": "node scripts/stripe-test.mjs cancel",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^6.1.1",
+    "@vitejs/plugin-rsc": "^0.5.35",
+    "bcryptjs": "^3.0.3",
+    "jose": "^6.2.12",
+    "jszip": "^3.10.2",
+    "mongoose": "^9.10.3",
+    "pdfjs-dist": "^6.3.289",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-server-dom-webpack": "^19.3.0",
+    "stripe": "^23.0.0",
+    "vinext": "^1.0.1",
+    "vite": "^8.3.2",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.6.0"
+  },
+  "type": "module"
+}

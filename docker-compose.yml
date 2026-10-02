@@ -1,0 +1,16 @@
+# MongoDB local para desenvolvimento: `yarn dev` (ou `yarn db:up`)
+services:
+  mongo:
+    image: mongo:7
+    container_name: resolvehub-mongo
+    ports:
+      - "27018:27017"
+    volumes:
+      - resolvehub-mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+volumes:
+  resolvehub-mongo-data:
