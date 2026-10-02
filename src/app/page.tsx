@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import ToolCardGrid from "@/components/tools/ToolCardGrid";
+import SeoToolLinks from "@/components/seo/SeoToolLinks";
 
 export default function Home() {
   return (
@@ -22,6 +23,7 @@ export default function Home() {
         </section>
         <h2 className="section-title mb-4">Ferramentas</h2>
         <ToolCardGrid />
+        <SeoToolLinks />
       </main>
     </>
   );

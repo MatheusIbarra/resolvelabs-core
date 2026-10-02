@@ -1,10 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import { SESSION_COOKIE, getJwtSecret, toSessionPayload, type SessionPayload } from "@/lib/session";
+import { publicToolPaths } from "@/lib/seo-tools";
 import { REF_COOKIE, REF_COOKIE_MAX_AGE_SECONDS, parseAffiliateCode } from "@/lib/affiliate";
 
 const AUTH_PAGES = ["/login", "/register"];
 const PROTECTED_PAGES = ["/dashboard", "/ferramentas", "/admin", "/checkout", "/upgrade"];
+
+/** Landings de SEO e ferramentas só-navegador (match exato, nunca por prefixo): públicas e indexáveis sem login. */
+const PUBLIC_SEO_PATHS = new Set(publicToolPaths());
 
 /** Captura `?ref=CODIGO` em um cookie para o cadastro (a existência do código é validada no register). */
 function withRef(request: NextRequest, response: NextResponse): NextResponse {
@@ -61,7 +65,8 @@ export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const path = normalize(pathname);
   const isAuthPage = AUTH_PAGES.some((p) => matchesPrefix(path, p));
-  const isProtected = PROTECTED_PAGES.some((p) => matchesPrefix(path, p));
+  const isPublicSeoPage = PUBLIC_SEO_PATHS.has(path.length > 1 ? path.replace(/\/$/, "") : path);
+  const isProtected = !isPublicSeoPage && PROTECTED_PAGES.some((p) => matchesPrefix(path, p));
 
   // Link de indicação na home (/?ref=CODIGO): leva direto ao cadastro, com o código guardado no cookie.
   if (path === "/" && parseAffiliateCode(request.nextUrl.searchParams.get("ref"))) {

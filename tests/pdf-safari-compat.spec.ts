@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { USER_PASSWORD } from "./support/e2e-env";
+import { USER_PASSWORD, USER_PHONE } from "./support/e2e-env";
 import { SAMPLE_STATEMENT, buildStatementPdf } from "./support/pdf";
 
 /**
@@ -10,7 +10,7 @@ import { SAMPLE_STATEMENT, buildStatementPdf } from "./support/pdf";
 test("PDF -> OFX funciona em navegador sem iteração assíncrona de ReadableStream", async ({ page }) => {
   const email = `compat-${Date.now()}@resolvelabs.test`;
   const credentials = { email, password: USER_PASSWORD };
-  expect((await page.request.post("/api/auth/register", { data: credentials })).status()).toBe(201);
+  expect((await page.request.post("/api/auth/register", { data: { ...credentials, phone: USER_PHONE, termsAccepted: true } })).status()).toBe(201);
   expect((await page.request.post("/api/auth/login", { data: credentials })).status()).toBe(200);
 
   await page.goto("/ferramentas/pdf-para-ofx");

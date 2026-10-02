@@ -5,11 +5,13 @@ import Link from "next/link";
 import UsersTab from "./UsersTab";
 import CouponsTab from "./CouponsTab";
 import AffiliatesTab from "./AffiliatesTab";
+import UsageTab from "./UsageTab";
 
 const TABS = [
   { id: "users", label: "Usuários e PRO", Component: UsersTab },
   { id: "coupons", label: "Cupons", Component: CouponsTab },
   { id: "affiliates", label: "Afiliados", Component: AffiliatesTab },
+  { id: "usage", label: "Uso das ferramentas", Component: UsageTab },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];

@@ -10,3 +10,6 @@ export const ADMIN = { email: "e2e-admin@resolvelabs.test", password: "Admin#E2e
 export const USER_PASSWORD = "Senha#E2e-2026";
 
 export const FREE_LIMIT = 3;
+
+/** Celular e aceite dos termos são obrigatórios no cadastro. */
+export const USER_PHONE = "(11) 91234-5678";

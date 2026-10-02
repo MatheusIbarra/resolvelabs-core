@@ -126,6 +126,7 @@ Depois, faça login de novo (ou recarregue o painel) para a sessão enxergar o n
 | `npm run build` | Build de produção (`vite build`) |
 | `npm start` | Serve o build de produção (`vinext start`) |
 | `npm run typecheck` | Checagem de tipos com `tsc --noEmit` |
+| `npm run check:design` | Falha se o visual antigo (preto, quadrado, estilo "dev") voltar ao código. As regras estão no `CLAUDE.md` |
 | `npm run db:up` / `db:down` | Sobe / derruba o MongoDB do Docker |
 | `npm run make-admin` | Define o role de um usuário |
 | `npm run stripe:end-trial` / `stripe:cancel` | Simulam eventos de cobrança no Stripe (teste) |

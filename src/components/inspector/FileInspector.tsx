@@ -9,6 +9,7 @@ import { decodeText } from "@/utils/fileInspector/text";
 import { formatXml, jsonNode, parseJson, parseXml, xmlNode, type TreeNode } from "@/utils/fileInspector/tree";
 import { PdfPasswordError, inspectImage, inspectPdf, type ImageInfo, type PdfInfo } from "@/utils/fileInspector/media";
 import type { FileKind, OfxData } from "@/utils/fileInspector/types";
+import { trackEvent } from "@/lib/track";
 import { Loading } from "../ui/Loading";
 import Alert from "../ui/Alert";
 import { useToast } from "../ui/Toast";
@@ -66,7 +67,7 @@ async function inspect(file: File, kind: FileKind): Promise<Loaded> {
   return { kind: "xml", root: xmlNode(parsed.root, "/"), getText: () => formatXml(parsed.doc) };
 }
 
-export default function FileInspector() {
+export default function FileInspector({ toolSlug }: { toolSlug?: string } = {}) {
   const toast = useToast();
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -109,6 +110,7 @@ export default function FileInspector() {
       const next: Result = { file: { name: file.name, size: file.size, lastModified: file.lastModified }, readMs: Math.round(performance.now() - started), loaded };
       resultRef.current = next;
       setResult(next);
+      if (toolSlug) trackEvent(toolSlug, "use", loaded.kind); // só o tipo, nunca nome ou conteúdo
     } catch (err) {
       if (id !== runId.current) return;
       const message = err instanceof PdfPasswordError ? err.message : err instanceof Error ? err.message : "Não foi possível ler o arquivo.";
@@ -117,7 +119,7 @@ export default function FileInspector() {
     } finally {
       if (id === runId.current) setIsReading(false);
     }
-  }, [toast]);
+  }, [toast, toolSlug]);
 
   const clear = () => {
     runId.current++;

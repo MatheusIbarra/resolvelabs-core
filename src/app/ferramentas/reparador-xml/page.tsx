@@ -3,7 +3,8 @@ import ToolLayout from "@/components/tools/ToolLayout";
 import ToolGuard from "@/components/tools/ToolGuard";
 import XmlFixer from "@/components/tools/XmlFixer";
 
-export const metadata = { title: "Reparador de XML Merchant - ResolveLabs" };
+// Rota protegida (PRO): não indexar. A landing pública é /ferramentas/reparador-xml-merchant.
+export const metadata = { title: "Reparador de XML Merchant - ResolveLabs", robots: { index: false, follow: false } };
 
 export const dynamic = "force-dynamic";
 

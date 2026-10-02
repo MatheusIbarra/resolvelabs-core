@@ -29,6 +29,13 @@ export interface AdminAffiliate {
   lastSignupAt: string;
 }
 
+export interface AdminToolStatRow {
+  tool: string;
+  event: "view" | "use";
+  kind: string;
+  count: number;
+}
+
 async function adminRequest<T>(url: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
@@ -60,6 +67,8 @@ export const adminApi = {
   setCouponActive: (id: string, active: boolean) =>
     adminRequest<{ ok: true }>(`/api/admin/coupons/${id}`, json("PATCH", { active })),
   deleteCoupon: (id: string) => adminRequest<{ ok: true }>(`/api/admin/coupons/${id}`, { method: "DELETE" }),
+
+  toolStats: (days: number) => adminRequest<{ days: number; rows: AdminToolStatRow[] }>(`/api/admin/stats?days=${days}`),
 
   listAffiliates: () => adminRequest<{ affiliates: AdminAffiliate[] }>("/api/admin/affiliates"),
 };

@@ -1,5 +1,6 @@
 "use client";
 
+import { trackEvent } from "@/lib/track";
 import { Fragment, useState } from "react";
 import UsageBadge from "./UsageBadge";
 import { DATA_TYPES, MAX_MOCK_RECORDS, generateMockRecords, seededRng, toFormattedJson, type DataTypeId } from "@/utils/mockGenerator";
@@ -66,6 +67,7 @@ export default function MockDataGenerator() {
     try {
       setJson(toFormattedJson(generateMockRecords(fields, n)));
       setUsed((u) => u + 1);
+      trackEvent("mock-data-br", "use");
       toast.success(MSG.mock.generated(n));
     } catch (err) {
       toast.error(errorMessage(err, MSG.mock.failed));
