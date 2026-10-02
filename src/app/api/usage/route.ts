@@ -2,13 +2,17 @@ import { NextResponse, type NextRequest } from "next/server";
 import { User } from "@/models/User";
 import { getCurrentUser, unauthenticated } from "@/lib/serverAuth";
 import { getTool } from "@/lib/tools";
+import { rateLimit } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** Consome 1 uso gratuito da ferramenta. O limite é aplicado de forma atômica no banco. */
+/**
+ * Reserva 1 uso gratuito da ferramenta ANTES do processamento (o limite é aplicado de forma atômica no banco).
+ * Body { tool, refund: true } devolve 1 uso quando o processamento falhou sem entregar resultado.
+ */
 export async function POST(request: NextRequest) {
-  let body: { tool?: unknown };
+  let body: { tool?: unknown; refund?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -26,6 +30,18 @@ export async function POST(request: NextRequest) {
 
     // PRO e admin não consomem cota.
     if (user.role !== "free") return NextResponse.json({ usageCount: user.usageCount });
+
+    if (body.refund === true) {
+      // Estorno limitado: evita usar o endpoint para zerar a cota repetidamente.
+      const limited = rateLimit(`usage-refund:${user.id}`, 5, 10 * 60_000);
+      if (limited) return limited;
+      const refunded = await User.findOneAndUpdate(
+        { _id: user._id, usageCount: { $gt: 0 } },
+        { $inc: { usageCount: -1 } },
+        { new: true },
+      );
+      return NextResponse.json({ usageCount: refunded?.usageCount ?? user.usageCount });
+    }
 
     const updated = await User.findOneAndUpdate(
       { _id: user._id, usageCount: { $lt: tool.freeLimit } },

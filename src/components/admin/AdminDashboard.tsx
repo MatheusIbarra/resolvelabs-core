@@ -5,15 +5,19 @@ import Link from "next/link";
 import UsersTab from "./UsersTab";
 import CouponsTab from "./CouponsTab";
 import AffiliatesTab from "./AffiliatesTab";
-import { MONO } from "./adminUi";
 
 const TABS = [
-  { id: "users", label: "01 Usuários & PRO", Component: UsersTab },
-  { id: "coupons", label: "02 Cupons", Component: CouponsTab },
-  { id: "affiliates", label: "03 Afiliados", Component: AffiliatesTab },
+  { id: "users", label: "Usuários e PRO", Component: UsersTab },
+  { id: "coupons", label: "Cupons", Component: CouponsTab },
+  { id: "affiliates", label: "Afiliados", Component: AffiliatesTab },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
+
+const tabClass = (active: boolean) =>
+  `-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+    active ? "border-teal-700 text-teal-800" : "border-transparent text-stone-500 hover:text-stone-800"
+  }`;
 
 export default function AdminDashboard() {
   const [active, setActive] = useState<TabId>("users");
@@ -21,32 +25,19 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <div className="mb-8 border-b border-stone-950 pb-6">
-        <p className={`${MONO} mb-3 text-stone-500`}>Área restrita / admin</p>
-        <h1 className="font-mono text-2xl font-semibold uppercase tracking-tight text-stone-950 md:text-3xl">
-          Painel administrativo
-        </h1>
+      <div className="mb-8">
+        <h1 className="mb-2 text-3xl font-semibold tracking-tight text-stone-900">Painel administrativo</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-stone-600">Gerencie usuários, cupons, afiliados e tickets de suporte.</p>
       </div>
 
-      <div role="tablist" aria-label="Seções do painel" className="mb-8 flex flex-wrap border border-stone-950">
-        {TABS.map((tab, i) => {
-          const selected = tab.id === active;
-          return (
-            <button
-              key={tab.id}
-              role="tab"
-              aria-selected={selected}
-              onClick={() => setActive(tab.id)}
-              className={`${MONO} px-5 py-3 transition-colors ${i > 0 ? "border-l border-stone-950" : ""} ${
-                selected ? "bg-stone-950 text-white" : "bg-white text-stone-950 hover:bg-stone-100"
-              }`}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-        <Link href="/admin/support" className={`${MONO} border-l border-stone-950 bg-white px-5 py-3 text-stone-950 transition-colors hover:bg-stone-100`}>
-          04 Suporte ↗
+      <div role="tablist" aria-label="Seções do painel" className="mb-6 flex flex-wrap border-b border-stone-200">
+        {TABS.map((tab) => (
+          <button key={tab.id} role="tab" aria-selected={tab.id === active} onClick={() => setActive(tab.id)} className={tabClass(tab.id === active)}>
+            {tab.label}
+          </button>
+        ))}
+        <Link href="/admin/support" className={`${tabClass(false)} ml-auto`}>
+          Tickets de suporte →
         </Link>
       </div>
 

@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 import { expireProIfNeeded, issueSession, publicUser } from "@/lib/serverAuth";
 import { parseEmail } from "@/lib/validation";
+import { clientIp, rateLimit } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +17,9 @@ let dummyHash: Promise<string> | null = null;
 const getDummyHash = () => (dummyHash ??= bcrypt.hash("resolvelabs-dummy-password", 12));
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(`login:ip:${clientIp(request)}`, 20, 15 * 60_000);
+  if (limited) return limited;
+
   let body: Record<string, unknown>;
   try {
     body = await request.json();
@@ -28,6 +32,10 @@ export async function POST(request: NextRequest) {
   if (!email || typeof password !== "string" || password.length === 0 || password.length > 1024) {
     return NextResponse.json(INVALID_CREDENTIALS, { status: 401 });
   }
+
+  // Limite extra por e-mail: freia ataques de senha distribuídos entre IPs.
+  const emailLimited = rateLimit(`login:email:${email}`, 10, 15 * 60_000);
+  if (emailLimited) return emailLimited;
 
   try {
     await connectDB();

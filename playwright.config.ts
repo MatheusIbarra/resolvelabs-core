@@ -39,6 +39,7 @@ export default defineConfig({
       JWT_SECRET: E2E_JWT_SECRET,
       // O WebKit não aceita cookie Secure em http local; só afeta este servidor de teste.
       INSECURE_COOKIES: "true",
+      RATE_LIMIT_DISABLED: "true",
       // Fluxos de pagamento não são exercitados aqui; valores neutros evitam chamadas reais ao Stripe.
       STRIPE_SECRET_KEY: "",
       STRIPE_WEBHOOK_SECRET: "",

@@ -58,16 +58,16 @@ export default function SupportAdmin() {
   };
 
   return (
-    <div className="grid border border-stone-950 lg:h-[calc(100vh-18rem)] lg:min-h-[32rem] lg:grid-cols-[22rem_1fr]">
-      <aside className="flex min-h-0 flex-col border-b border-stone-950 lg:border-b-0 lg:border-r">
-        <div className="flex flex-wrap border-b border-stone-950">
+    <div className="card grid overflow-hidden lg:h-[calc(100vh-18rem)] lg:min-h-[32rem] lg:grid-cols-[22rem_1fr]">
+      <aside className="flex min-h-0 flex-col border-b border-stone-200 lg:border-b-0 lg:border-r">
+        <div className="flex flex-wrap border-b border-stone-200">
           {FILTERS.map((f, i) => (
             <button
               key={f.id}
               onClick={() => setFilter(f.id)}
               aria-pressed={filter === f.id}
-              className={`${MONO} flex-1 px-2 py-2 text-[10px] transition-colors ${i > 0 ? "border-l border-stone-950" : ""} ${
-                filter === f.id ? "bg-stone-950 text-white" : "bg-white hover:bg-stone-100"
+              className={`flex-1 px-2 py-2.5 text-xs font-medium transition-colors ${
+                filter === f.id ? "bg-teal-50 text-teal-800" : "text-stone-600 hover:bg-stone-50"
               }`}
             >
               {f.label}
@@ -77,31 +77,31 @@ export default function SupportAdmin() {
 
         <ul className="max-h-72 min-h-0 flex-1 overflow-y-auto lg:max-h-none">
           {error && (
-            <li className={`${MONO} p-4 text-red-700`} role="alert">
+            <li className="p-4 text-sm text-red-700" role="alert">
               {error}
             </li>
           )}
-          {!error && tickets === null && <li className={`${MONO} p-4 text-stone-500`}><Loading>Carregando…</Loading></li>}
-          {tickets?.length === 0 && <li className={`${MONO} p-4 text-stone-500`}>Nenhum ticket.</li>}
+          {!error && tickets === null && <li className="p-4 text-sm text-stone-500"><Loading>Carregando…</Loading></li>}
+          {tickets?.length === 0 && <li className="p-4 text-sm text-stone-500">Nenhum ticket.</li>}
           {tickets?.map((t) => {
             // "Aguardando admin": a última mensagem é do cliente e o ticket não foi fechado.
             const needsReply = t.status === "open";
             return (
-              <li key={t.id} className="border-b border-stone-300">
+              <li key={t.id} className="border-b border-stone-100">
                 <button
                   onClick={() => setActiveId(t.id)}
                   aria-current={activeId === t.id}
-                  className={`block w-full px-3 py-3 text-left transition-colors ${activeId === t.id ? "bg-stone-100" : "hover:bg-stone-50"}`}
+                  className={`block w-full px-3 py-3 text-left transition-colors ${activeId === t.id ? "bg-teal-50" : "hover:bg-stone-50"}`}
                 >
                   <span className="flex items-center justify-between gap-2">
                     <span className="flex min-w-0 items-center gap-2">
-                      {needsReply && <span className="h-2 w-2 shrink-0 bg-amber-500" title="Aguardando resposta" />}
-                      <span className="truncate text-sm font-medium text-stone-950">{t.subject}</span>
+                      {needsReply && <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" title="Aguardando resposta" />}
+                      <span className="truncate text-sm font-medium text-stone-900">{t.subject}</span>
                     </span>
                     <StatusTag status={t.status} />
                   </span>
                   <span className="mt-1 block truncate text-xs text-stone-500">{t.userEmail ?? "—"}</span>
-                  <span className={`${MONO} mt-1 block text-[10px] text-stone-400`}>
+                  <span className="mt-1 block text-xs text-stone-400">
                     {t.messageCount} msg · {fmtTime(t.updatedAt)}
                   </span>
                 </button>
@@ -126,7 +126,7 @@ export default function SupportAdmin() {
             }
           />
         ) : (
-          <p className={`${MONO} p-6 text-stone-500`}>Selecione um ticket para ver a conversa.</p>
+          <p className="p-6 text-sm text-stone-500">Selecione um ticket para ver a conversa.</p>
         )}
       </section>
     </div>

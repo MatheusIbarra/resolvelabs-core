@@ -82,13 +82,15 @@ export default function CouponsTab() {
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const visible = (coupons ?? []).filter((c) => showAll || statusOf(c) === "ativo");
-  const labelCls = `${MONO} mb-1.5 block text-stone-500`;
+  const labelCls = "label";
 
   return (
     <section>
-      <form onSubmit={create} className="mb-8 border border-stone-950">
-        <div className={`${MONO} bg-stone-950 px-4 py-2.5 text-white`}>Criar novo cupom</div>
-        <div className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-5">
+      <form onSubmit={create} className="card mb-8">
+        <div className="border-b border-stone-200 px-5 py-3.5">
+          <h2 className="section-title">Criar novo cupom</h2>
+        </div>
+        <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
             <label htmlFor="c-code" className={labelCls}>Código</label>
             <input id="c-code" value={form.code} onChange={set("code")} placeholder="LANCAMENTO50" maxLength={32} className={`${FIELD} uppercase`} />
@@ -111,15 +113,15 @@ export default function CouponsTab() {
             </button>
           </div>
         </div>
-        <p className="border-t border-stone-950 px-4 py-2 font-mono text-xs text-stone-500">100% = acesso gratuito/vitalício.</p>
+        <p className="border-t border-stone-200 px-5 py-3 text-xs text-stone-500">100% = acesso gratuito/vitalício.</p>
       </form>
 
       <div className="mb-3 flex items-center justify-between">
-        <label className={`${MONO} flex cursor-pointer items-center gap-2`}>
-          <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} className="h-4 w-4 accent-stone-950" />
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700">
+          <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} className="h-4 w-4 accent-teal-700" />
           Mostrar todos (inclui inativos, expirados e esgotados)
         </label>
-        {coupons && <span className={`${MONO} text-stone-500`}>{visible.length} / {coupons.length} cupons</span>}
+        {coupons && <span className="text-sm text-stone-500">{visible.length} de {coupons.length} cupons</span>}
       </div>
 
       {error ? (
@@ -127,9 +129,9 @@ export default function CouponsTab() {
       ) : !coupons ? (
         <Loading>Carregando cupons…</Loading>
       ) : (
-        <div className="overflow-x-auto border border-stone-950">
+        <div className="card overflow-x-auto">
           <table className="w-full min-w-[40rem] text-sm">
-            <thead className="bg-stone-950 text-white">
+            <thead className="border-b border-stone-200 bg-stone-50">
               <tr>
                 <th className={TH}>Código</th>
                 <th className={TH}>Desconto</th>
@@ -139,20 +141,20 @@ export default function CouponsTab() {
                 <th className={`${TH} text-right`}>Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-950">
+            <tbody className="divide-y divide-stone-100">
               {visible.length === 0 && (
-                <tr><td colSpan={6} className={`${TD} ${MONO} text-center text-stone-500`}>Nenhum cupom {showAll ? "cadastrado" : "ativo"}</td></tr>
+                <tr><td colSpan={6} className={`${TD} py-10 text-center text-stone-500`}>Nenhum cupom {showAll ? "cadastrado" : "ativo"}</td></tr>
               )}
               {visible.map((c) => {
                 const status = statusOf(c);
                 return (
-                  <tr key={c.id} className="bg-white">
-                    <td className={`${TD} font-mono text-sm font-semibold`}>{c.code}</td>
-                    <td className={`${TD} font-mono text-xs`}>{c.discountPercent}%</td>
-                    <td className={`${TD} font-mono text-xs`}>{fmtDate(c.expiresAt)}</td>
-                    <td className={`${TD} font-mono text-xs`}>{c.usesCount}/{c.maxUses}</td>
+                  <tr key={c.id} className="hover:bg-stone-50">
+                    <td className={`${TD} font-mono text-xs font-semibold text-stone-900`}>{c.code}</td>
+                    <td className={`${TD}`}>{c.discountPercent}%</td>
+                    <td className={`${TD}`}>{fmtDate(c.expiresAt)}</td>
+                    <td className={`${TD}`}>{c.usesCount}/{c.maxUses}</td>
                     <td className={TD}>
-                      <span className={`${MONO} px-1.5 py-0.5 ${status === "ativo" ? "bg-stone-950 text-white" : "border border-stone-400 text-stone-500"}`}>
+                      <span className={`capitalize ${status === "ativo" ? "badge-brand" : status === "inativo" ? "badge-neutral" : "badge-warn"}`}>
                         {status}
                       </span>
                     </td>

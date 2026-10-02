@@ -1,10 +1,14 @@
+import { requireRolePage } from "@/lib/pageGuard";
 import ToolLayout from "@/components/tools/ToolLayout";
 import ToolGuard from "@/components/tools/ToolGuard";
 import XmlFixer from "@/components/tools/XmlFixer";
 
 export const metadata = { title: "Reparador de XML Merchant - ResolveLabs" };
 
-export default function Page() {
+export const dynamic = "force-dynamic";
+
+export default async function Page() {
+  await requireRolePage(["pro", "admin"], "/upgrade");
   return (
     <ToolLayout
       wide

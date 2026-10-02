@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser, unauthenticated } from "@/lib/serverAuth";
 import { StripeNotConfiguredError, appUrl, getStripe } from "@/lib/stripe";
 import { PRO_PRICE_CENTS, PRO_TRIAL_DAYS } from "@/lib/content";
+import { rateLimit } from "@/lib/rateLimit";
 import { consumeCoupon, findUsableCoupon } from "@/lib/couponRedeem";
 
 export const runtime = "nodejs";
@@ -30,6 +31,8 @@ export async function POST(request: NextRequest) {
     // Cupom opcional. O cliente só envia o código; o desconto vem sempre do banco.
     let coupon: Awaited<ReturnType<typeof findUsableCoupon>> | null = null;
     if (body.couponCode !== undefined && body.couponCode !== null && body.couponCode !== "") {
+      const limited = rateLimit(`coupon:${user.id}`, 10, 10 * 60_000);
+      if (limited) return limited;
       coupon = await findUsableCoupon(body.couponCode);
       if (!coupon.ok) return NextResponse.json({ error: coupon.error }, { status: 400 });
     }

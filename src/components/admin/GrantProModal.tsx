@@ -61,7 +61,7 @@ export default function GrantProModal({ user, onClose, onGranted }: GrantProModa
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/70 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/50 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <form
@@ -69,18 +69,18 @@ export default function GrantProModal({ user, onClose, onGranted }: GrantProModa
         role="dialog"
         aria-modal="true"
         aria-labelledby="grant-title"
-        className="w-full max-w-md border-2 border-stone-950 bg-white"
+        className="relative w-full max-w-md rounded-xl bg-white shadow-xl"
       >
-        <div className={`${MONO} flex items-center justify-between bg-stone-950 px-4 py-3 text-white`}>
-          <span id="grant-title">Conceder PRO</span>
-          <button type="button" onClick={onClose} aria-label="Fechar" className="hover:text-teal-300">ESC ✕</button>
+        <div className="flex items-center justify-between border-b border-stone-200 px-5 py-4">
+          <h2 id="grant-title" className="text-lg font-semibold text-stone-900">Conceder PRO</h2>
+          <button type="button" onClick={onClose} aria-label="Fechar" className="rounded-md px-2 py-1 text-sm text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700">✕</button>
         </div>
 
         <div className="space-y-5 p-5">
-          <p className="font-mono text-sm break-all">{user.email}</p>
+          <p className="break-all text-sm font-medium text-stone-900">{user.email}</p>
 
           <div>
-            <label htmlFor="grant-days" className={`${MONO} mb-2 block text-stone-500`}>Dias de acesso</label>
+            <label htmlFor="grant-days" className="label">Dias de acesso</label>
             <input
               id="grant-days"
               type="number"
@@ -100,17 +100,17 @@ export default function GrantProModal({ user, onClose, onGranted }: GrantProModa
             </div>
           </div>
 
-          <label className={`${MONO} flex cursor-pointer items-center gap-3`}>
-            <input type="checkbox" checked={lifetime} onChange={(e) => setLifetime(e.target.checked)} className="h-4 w-4 accent-stone-950" />
+          <label className="flex cursor-pointer items-center gap-3 text-sm text-stone-700">
+            <input type="checkbox" checked={lifetime} onChange={(e) => setLifetime(e.target.checked)} className="h-4 w-4 accent-teal-700" />
             Vitalício (sem expiração)
           </label>
 
-          <p className="font-mono text-xs text-stone-500">
+          <p className="text-xs text-stone-500">
             Se o usuário já tem PRO ativo com data de vencimento, os dias são somados a partir dela.
           </p>
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-stone-950 p-4">
+        <div className="flex justify-end gap-2 border-t border-stone-200 p-4">
           <button type="button" onClick={onClose} className={BTN}>Cancelar</button>
           <button type="submit" disabled={isPending} className={BTN_SOLID}>
             {isPending ? <LoadingLabel>Concedendo PRO…</LoadingLabel> : "Conceder PRO"}

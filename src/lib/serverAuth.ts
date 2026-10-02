@@ -19,7 +19,12 @@ export async function expireProIfNeeded(user: UserDoc): Promise<boolean> {
 
 /** Resolve o usuário atual (estado vivo do banco, com expiração de PRO aplicada). */
 export async function getCurrentUser(request: NextRequest): Promise<UserDoc | null> {
-  const session = await verifySession(request.cookies.get(SESSION_COOKIE)?.value);
+  return getUserFromToken(request.cookies.get(SESSION_COOKIE)?.value);
+}
+
+/** Mesmo que `getCurrentUser`, a partir do token do cookie (usado também por páginas de servidor). */
+export async function getUserFromToken(token: string | undefined): Promise<UserDoc | null> {
+  const session = await verifySession(token);
   if (!session) return null;
   await connectDB();
   const user = await User.findById(session.id);

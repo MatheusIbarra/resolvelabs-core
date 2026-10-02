@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { ApiError, checkToolAccess, registerPdfUsage } from "@/lib/fakeApi";
+import { ApiError, checkToolAccess, refundPdfUsage, registerPdfUsage } from "@/lib/fakeApi";
 import { baseName, downloadBlob } from "@/utils/download";
 import { PdfNoTextError, convertPdfToOfx, ofxToBlob } from "@/utils/pdfToOfx";
 import { FREE_PDF_LIMIT, SUPPORTED_BANKS, type DenyReason } from "@/lib/content";
@@ -58,16 +58,20 @@ export default function UploadZone({ onAccessDenied }: UploadZoneProps) {
     if (!(await validateAccess())) return;
 
     setIsProcessing(true);
+    let reserved = false;
+    let delivered = false;
     try {
-      // 1) Conversão 100% local: o PDF nunca sai do navegador.
+      // 1) O servidor reserva o uso (limite aplicado de forma atômica) antes de qualquer processamento.
+      const { usageCount } = await registerPdfUsage();
+      reserved = true;
+      applyProfile({ usageCount });
+      // 2) Conversão 100% local: o PDF nunca sai do navegador.
       const result = await convertPdfToOfx(file);
       if (result.transactions.length === 0) {
         toast.error(MSG.pdf.noTransactions);
-        return; // não consome o uso gratuito
+        return; // sem resultado: o uso reservado é devolvido no finally
       }
-      // 2) Só o contador de uso vai ao servidor (limite aplicado de forma atômica).
-      const { usageCount } = await registerPdfUsage();
-      applyProfile({ usageCount });
+      delivered = true;
       // 3) Download do .ofx.
       downloadBlob(ofxToBlob(result.ofx), `${baseName(file.name)}.ofx`);
       toast.success(MSG.pdf.converted(file.name, result.transactions.length), { title: MSG.pdf.convertedTitle });
@@ -82,6 +86,13 @@ export default function UploadZone({ onAccessDenied }: UploadZoneProps) {
         toast.error(errorMessage(err, MSG.pdf.failed));
       }
     } finally {
+      if (reserved && !delivered) {
+        try {
+          applyProfile(await refundPdfUsage());
+        } catch {
+          await refresh(); // o servidor segue como fonte da verdade do contador
+        }
+      }
       setIsProcessing(false);
     }
   };

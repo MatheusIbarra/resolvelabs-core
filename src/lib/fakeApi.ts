@@ -136,11 +136,16 @@ export async function checkToolAccess(slug: string): Promise<AccessResult> {
 }
 
 /**
- * Registra 1 uso gratuito da conversão PDF -> OFX. A conversão em si acontece no navegador:
+ * Reserva 1 uso gratuito da conversão PDF -> OFX ANTES de converter. A conversão em si acontece no navegador:
  * nenhum dado do arquivo é enviado, apenas o contador de uso. O servidor reaplica o limite de forma atômica.
  */
 export async function registerPdfUsage(): Promise<{ usageCount: number }> {
   return postJson<{ usageCount: number }>("/api/usage", { tool: "pdf-para-ofx" });
+}
+
+/** Devolve o uso reservado quando a conversão falhou sem entregar resultado. */
+export async function refundPdfUsage(): Promise<{ usageCount: number }> {
+  return postJson<{ usageCount: number }>("/api/usage", { tool: "pdf-para-ofx", refund: true });
 }
 
 /** Cria a sessão do Stripe Checkout (7 dias grátis + R$ 7,99/mês) e devolve a URL para redirecionar. */

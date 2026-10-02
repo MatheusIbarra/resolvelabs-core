@@ -14,13 +14,13 @@ const fmtTime = (iso: string) =>
   new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
 export const STATUS_STYLE: Record<Ticket["status"], string> = {
-  open: "border-stone-950 bg-white text-stone-950",
-  answered: "border-teal-700 bg-teal-700 text-white",
-  closed: "border-stone-400 bg-stone-100 text-stone-500",
+  open: "bg-amber-50 text-amber-800",
+  answered: "bg-teal-50 text-teal-800",
+  closed: "bg-stone-100 text-stone-500",
 };
 
 export function StatusTag({ status }: { status: Ticket["status"] }) {
-  return <span className={`${MONO} inline-block border px-1.5 py-0.5 ${STATUS_STYLE[status]}`}>{STATUS_LABEL[status]}</span>;
+  return <span className={`badge ${STATUS_STYLE[status]}`}>{STATUS_LABEL[status]}</span>;
 }
 
 interface TicketThreadProps {
@@ -99,7 +99,7 @@ export default function TicketThread({ ticketId, viewer, actions, onChange }: Ti
 
   if (!ticket) {
     return (
-      <p className={`${MONO} p-4 text-stone-500`} role={loadError ? "alert" : "status"}>
+      <p className="p-4 text-sm text-stone-500" role={loadError ? "alert" : "status"}>
         {loadError ?? <Loading>Carregando…</Loading>}
       </p>
     );
@@ -109,9 +109,9 @@ export default function TicketThread({ ticketId, viewer, actions, onChange }: Ti
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-start justify-between gap-3 border-b border-stone-950 p-3">
+      <div className="flex items-start justify-between gap-3 border-b border-stone-200 p-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-stone-950" title={ticket.subject}>
+          <p className="truncate text-sm font-semibold text-stone-900" title={ticket.subject}>
             {ticket.subject}
           </p>
           <p className={`${MONO} mt-1 flex flex-wrap items-center gap-2 text-stone-500`}>
@@ -128,12 +128,12 @@ export default function TicketThread({ ticketId, viewer, actions, onChange }: Ti
           const mine = m.sender === viewer;
           return (
             <li key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
-              <span className={`${MONO} mb-1 text-[10px] text-stone-500`}>
-                {m.sender === "admin" ? "SUPORTE" : "USUÁRIO"} · {fmtTime(m.createdAt)}
+              <span className="mb-1 text-xs text-stone-500">
+                {m.sender === "admin" ? "Suporte" : "Usuário"} · {fmtTime(m.createdAt)}
               </span>
               <p
-                className={`max-w-[85%] whitespace-pre-wrap break-words border border-stone-950 px-3 py-2 text-sm ${
-                  mine ? "bg-stone-950 text-white" : "bg-white text-stone-950"
+                className={`max-w-[85%] whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-sm ${
+                  mine ? "bg-teal-700 text-white" : "border border-stone-200 bg-white text-stone-900"
                 }`}
               >
                 {m.message}
@@ -145,16 +145,16 @@ export default function TicketThread({ ticketId, viewer, actions, onChange }: Ti
       </ol>
 
       {loadError && (
-        <p className={`${MONO} border-t border-stone-950 bg-amber-100 px-3 py-1.5 text-amber-900`} role="alert">
+        <p className="border-t border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-900" role="alert">
           Sem conexão — tentando de novo…
         </p>
       )}
 
       {closed ? (
-        <p className={`${MONO} border-t border-stone-950 p-3 text-stone-500`}>Ticket fechado. Abra um novo se precisar de ajuda.</p>
+        <p className="border-t border-stone-200 p-3 text-sm text-stone-500">Ticket fechado. Abra um novo se precisar de ajuda.</p>
       ) : (
         <form
-          className="border-t border-stone-950 p-3"
+          className="border-t border-stone-200 p-3"
           onSubmit={(e) => {
             e.preventDefault();
             void send();
@@ -176,12 +176,12 @@ export default function TicketThread({ ticketId, viewer, actions, onChange }: Ti
             className={`${FIELD} resize-none`}
           />
           {sendError && (
-            <p className={`${MONO} mt-2 text-red-700`} role="alert">
+            <p className="mt-2 text-sm text-red-700" role="alert">
               {sendError}
             </p>
           )}
           <div className="mt-2 flex items-center justify-between">
-            <span className={`${MONO} text-[10px] text-stone-400`}>Ctrl+Enter envia</span>
+            <span className="text-xs text-stone-400">Ctrl+Enter envia</span>
             <button type="submit" disabled={sending || draft.trim().length === 0} className={BTN_SOLID}>
               {sending ? <LoadingLabel>Enviando…</LoadingLabel> : "Enviar"}
             </button>

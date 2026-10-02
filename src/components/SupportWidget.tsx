@@ -19,7 +19,7 @@ const MESSAGE_MAX = 4000;
 const LIST_POLL_OPEN_MS = 15000;
 const LIST_POLL_CLOSED_MS = 60000;
 
-const TITLES: Record<View, string> = { faq: "SUPORTE", tickets: "MEUS TICKETS", new: "NOVO TICKET", chat: "CONVERSA" };
+const TITLES: Record<View, string> = { faq: "Suporte", tickets: "Meus tickets", new: "Novo ticket", chat: "Conversa" };
 
 /** Widget flutuante de suporte: FAQ pesquisável, abertura de ticket e chat por polling. */
 export default function SupportWidget() {
@@ -76,22 +76,22 @@ export default function SupportWidget() {
         <section
           role="dialog"
           aria-label="Suporte"
-          className="flex h-[min(34rem,calc(100vh-6rem))] w-[min(24rem,calc(100vw-2rem))] animate-[scale-in_0.25s_cubic-bezier(0.22,1,0.36,1)] flex-col border border-stone-950 bg-white origin-bottom-right"
+          className="flex h-[min(34rem,calc(100vh-6rem))] w-[min(24rem,calc(100vw-2rem))] animate-[scale-in_0.25s_cubic-bezier(0.22,1,0.36,1)] flex-col overflow-hidden rounded-xl border border-stone-200 bg-white shadow-xl origin-bottom-right"
         >
-          <header className="flex items-center justify-between border-b border-stone-950 bg-stone-950 px-3 py-2 text-white">
+          <header className="flex items-center justify-between border-b border-stone-200 bg-white px-3 py-3 text-stone-900">
             <div className="flex items-center gap-2">
               {view !== "faq" && (
                 <button
                   onClick={() => setView(view === "chat" || view === "new" ? (tickets?.length ? "tickets" : "faq") : "faq")}
                   aria-label="Voltar"
-                  className={`${MONO} px-1 hover:text-teal-300`}
+                  className="rounded-md px-2 py-1 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900"
                 >
                   ←
                 </button>
               )}
-              <h2 className={MONO}>{TITLES[view]}</h2>
+              <h2 className="text-sm font-semibold text-stone-900">{TITLES[view]}</h2>
             </div>
-            <button onClick={() => setOpen(false)} aria-label="Fechar suporte" className={`${MONO} px-1 hover:text-teal-300`}>
+            <button onClick={() => setOpen(false)} aria-label="Fechar suporte" className="rounded-md px-2 py-1 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900">
               ✕
             </button>
           </header>
@@ -129,11 +129,19 @@ export default function SupportWidget() {
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? "Fechar suporte" : "Abrir suporte"}
         aria-expanded={open}
-        className="relative flex h-12 w-12 items-center justify-center border border-stone-950 bg-stone-950 font-mono text-lg text-white transition-all duration-150 hover:bg-white hover:text-stone-950 active:scale-95"
+        className="relative flex h-14 w-14 items-center justify-center rounded-full bg-teal-700 text-white shadow-lg transition-all duration-150 hover:bg-teal-800 active:scale-95"
       >
-        {open ? "✕" : ">_"}
+        {open ? (
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+          </svg>
+        )}
         {!open && hasAnswered && (
-          <span className="absolute -right-1 -top-1 h-3 w-3 border border-stone-950 bg-teal-500" title="Você tem uma resposta do suporte" />
+          <span className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-amber-500" title="Você tem uma resposta do suporte" />
         )}
       </button>
     </div>
@@ -147,7 +155,7 @@ function FaqView({ onContact }: { onContact: () => void }) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-stone-950 p-3">
+      <div className="border-b border-stone-200 p-3">
         <input
           type="search"
           value={query}
@@ -163,11 +171,11 @@ function FaqView({ onContact }: { onContact: () => void }) {
         {items.map((item) => {
           const isOpen = expanded === item.id || (query.trim() !== "" && items.length === 1);
           return (
-            <li key={item.id} className="border-b border-stone-300">
+            <li key={item.id} className="border-b border-stone-100">
               <button
                 onClick={() => setExpanded(isOpen ? null : item.id)}
                 aria-expanded={isOpen}
-                className="flex w-full items-start justify-between gap-3 px-3 py-3 text-left text-sm font-medium text-stone-950 hover:bg-stone-100"
+                className="flex w-full items-start justify-between gap-3 px-3 py-3 text-left text-sm font-medium text-stone-900 hover:bg-stone-50"
               >
                 {item.question}
                 <span className={`${MONO} shrink-0 transition-transform duration-200 ${isOpen ? "rotate-45" : ""}`}>+</span>
@@ -181,11 +189,11 @@ function FaqView({ onContact }: { onContact: () => void }) {
           );
         })}
         {items.length === 0 && (
-          <li className={`${MONO} p-4 text-stone-500`}>Nada encontrado para “{query}”. Fale com o suporte abaixo.</li>
+          <li className="p-4 text-sm text-stone-500">Nada encontrado para “{query}”. Fale com o suporte abaixo.</li>
         )}
       </ul>
 
-      <div className="border-t border-stone-950 p-3">
+      <div className="border-t border-stone-200 p-3">
         <button onClick={onContact} className={`${BTN_SOLID} w-full`}>
           Falar com suporte / abrir ticket
         </button>
@@ -197,7 +205,7 @@ function FaqView({ onContact }: { onContact: () => void }) {
 function LoginGate({ next }: { next: string }) {
   return (
     <div className="flex h-full flex-col items-start justify-center gap-4 p-5">
-      <p className={`${MONO} border border-stone-950 px-2 py-1`}>ACESSO_NEGADO</p>
+      <span className="badge-warn">Acesso restrito</span>
       <p className="text-sm text-stone-800">Você precisa estar autenticado para abrir um ticket de suporte.</p>
       <Link href={`/login?next=${encodeURIComponent(next)}`} className={`${BTN_SOLID} inline-block`}>
         Entrar
@@ -210,13 +218,13 @@ function TicketList({ tickets, onOpen, onNew }: { tickets: TicketSummary[] | nul
   return (
     <div className="flex h-full flex-col">
       <ul className="min-h-0 flex-1 overflow-y-auto">
-        {tickets === null && <li className={`${MONO} p-4 text-stone-500`}><Loading>Carregando…</Loading></li>}
-        {tickets?.length === 0 && <li className={`${MONO} p-4 text-stone-500`}>Nenhum ticket ainda.</li>}
+        {tickets === null && <li className="p-4 text-sm text-stone-500"><Loading>Carregando…</Loading></li>}
+        {tickets?.length === 0 && <li className="p-4 text-sm text-stone-500">Nenhum ticket ainda.</li>}
         {tickets?.map((t) => (
-          <li key={t.id} className="border-b border-stone-300">
-            <button onClick={() => onOpen(t.id)} className="block w-full px-3 py-3 text-left hover:bg-stone-100">
+          <li key={t.id} className="border-b border-stone-100">
+            <button onClick={() => onOpen(t.id)} className="block w-full px-3 py-3 text-left hover:bg-stone-50">
               <span className="flex items-center justify-between gap-2">
-                <span className="truncate text-sm font-medium text-stone-950">{t.subject}</span>
+                <span className="truncate text-sm font-medium text-stone-900">{t.subject}</span>
                 <StatusTag status={t.status} />
               </span>
               <span className="mt-1 block truncate text-xs text-stone-500">
@@ -227,7 +235,7 @@ function TicketList({ tickets, onOpen, onNew }: { tickets: TicketSummary[] | nul
           </li>
         ))}
       </ul>
-      <div className="border-t border-stone-950 p-3">
+      <div className="border-t border-stone-200 p-3">
         <button onClick={onNew} className={`${BTN} w-full`}>
           + Novo ticket
         </button>
@@ -264,11 +272,11 @@ function NewTicketForm({ onCreated }: { onCreated: (t: TicketSummary) => void })
       }}
     >
       <label className="block">
-        <span className={`${MONO} mb-1 block text-stone-600`}>Assunto</span>
+        <span className="label">Assunto</span>
         <input value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={SUBJECT_MAX} required className={FIELD} />
       </label>
       <label className="flex min-h-0 flex-1 flex-col">
-        <span className={`${MONO} mb-1 block text-stone-600`}>Mensagem</span>
+        <span className="label">Mensagem</span>
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
@@ -278,7 +286,7 @@ function NewTicketForm({ onCreated }: { onCreated: (t: TicketSummary) => void })
         />
       </label>
       {error && (
-        <p className={`${MONO} text-red-700`} role="alert">
+        <p className="text-sm text-red-700" role="alert">
           {error}
         </p>
       )}

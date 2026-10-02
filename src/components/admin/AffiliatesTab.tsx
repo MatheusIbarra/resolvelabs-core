@@ -32,22 +32,22 @@ export default function AffiliatesTab() {
 
   return (
     <section>
-      <div className="mb-6 grid grid-cols-3 border border-stone-950">
+      <div className="mb-6 grid gap-4 sm:grid-cols-3">
         {[
           ["Afiliados ativos", rows.length],
           ["Cadastros indicados", totalSignups],
           ["Conversões em PRO", totalConversions],
-        ].map(([label, value], i) => (
-          <div key={label} className={`p-4 ${i > 0 ? "border-l border-stone-950" : ""}`}>
-            <p className={`${MONO} mb-1 text-stone-500`}>{label}</p>
-            <p className="font-mono text-3xl font-semibold">{value}</p>
+        ].map(([label, value]) => (
+          <div key={label} className="card p-5">
+            <p className="mb-1 text-sm text-stone-500">{label}</p>
+            <p className="text-3xl font-semibold tracking-tight text-stone-900">{value}</p>
           </div>
         ))}
       </div>
 
-      <div className="overflow-x-auto border border-stone-950">
+      <div className="card overflow-x-auto">
         <table className="w-full min-w-[40rem] text-sm">
-          <thead className="bg-stone-950 text-white">
+          <thead className="border-b border-stone-200 bg-stone-50">
             <tr>
               <th className={TH}>Código</th>
               <th className={TH}>Dono</th>
@@ -57,22 +57,22 @@ export default function AffiliatesTab() {
               <th className={TH}>Último cadastro</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-stone-950">
+          <tbody className="divide-y divide-stone-100">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={6} className={`${TD} ${MONO} text-center text-stone-500`}>
+                <td colSpan={6} className={`${TD} py-10 text-center text-stone-500`}>
                   Nenhuma indicação ainda. Compartilhe /register?ref=CÓDIGO
                 </td>
               </tr>
             )}
             {rows.map((r) => (
-              <tr key={r.code} className="bg-white">
-                <td className={`${TD} font-mono text-sm font-semibold`}>{r.code}</td>
-                <td className={`${TD} font-mono text-xs`}>{r.ownerEmail ?? "—"}</td>
-                <td className={`${TD} font-mono text-xs`}>{r.signups}</td>
-                <td className={`${TD} font-mono text-xs`}>{r.conversions}</td>
-                <td className={`${TD} font-mono text-xs`}>{r.signups ? Math.round((r.conversions / r.signups) * 100) : 0}%</td>
-                <td className={`${TD} font-mono text-xs`}>{fmtDate(r.lastSignupAt)}</td>
+              <tr key={r.code} className="hover:bg-stone-50">
+                <td className={`${TD} font-mono text-xs font-semibold text-stone-900`}>{r.code}</td>
+                <td className={`${TD}`}>{r.ownerEmail ?? "—"}</td>
+                <td className={`${TD}`}>{r.signups}</td>
+                <td className={`${TD}`}>{r.conversions}</td>
+                <td className={`${TD}`}>{r.signups ? Math.round((r.conversions / r.signups) * 100) : 0}%</td>
+                <td className={`${TD}`}>{fmtDate(r.lastSignupAt)}</td>
               </tr>
             ))}
           </tbody>

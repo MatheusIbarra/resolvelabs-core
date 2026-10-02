@@ -53,4 +53,4 @@ export const supportApi = {
   close: (id: string) => request<{ ticket: Ticket }>(`/api/support/tickets/${id}`, json("PATCH", { status: "closed" })),
 };
 
-export const STATUS_LABEL: Record<TicketStatus, string> = { open: "ABERTO", answered: "RESPONDIDO", closed: "FECHADO" };
+export const STATUS_LABEL: Record<TicketStatus, string> = { open: "Aberto", answered: "Respondido", closed: "Fechado" };

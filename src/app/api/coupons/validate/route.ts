@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser, unauthenticated } from "@/lib/serverAuth";
+import { rateLimit } from "@/lib/rateLimit";
 import { findUsableCoupon } from "@/lib/couponRedeem";
 
 export const runtime = "nodejs";
@@ -10,6 +11,10 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
     if (!user) return unauthenticated();
+
+    // Freia adivinhação de códigos de cupom (um cupom de 100% dá PRO vitalício).
+    const limited = rateLimit(`coupon:${user.id}`, 10, 10 * 60_000);
+    if (limited) return limited;
 
     let body: { code?: unknown };
     try {

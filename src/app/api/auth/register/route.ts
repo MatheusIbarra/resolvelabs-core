@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 import { isDuplicateKeyError, parseEmail, passwordError } from "@/lib/validation";
+import { clientIp, rateLimit } from "@/lib/rateLimit";
 import { generateAffiliateCode, parseAffiliateCode, REF_COOKIE } from "@/lib/affiliate";
 
 export const runtime = "nodejs";
@@ -12,6 +13,9 @@ const BCRYPT_ROUNDS = 12;
 const MAX_CODE_ATTEMPTS = 5;
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(`register:ip:${clientIp(request)}`, 10, 60 * 60_000);
+  if (limited) return limited;
+
   let body: Record<string, unknown>;
   try {
     body = await request.json();
