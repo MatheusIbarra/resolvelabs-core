@@ -27,3 +27,8 @@ export function useI18n(): ClientTranslator {
 export function useLocale(): Locale {
   return useI18n().locale;
 }
+
+/** Como `useI18n`, mas devolve null fora do provedor (páginas de erro renderizadas sem o layout de idioma). */
+export function useOptionalI18n(): ClientTranslator | null {
+  return useContext(I18nContext);
+}

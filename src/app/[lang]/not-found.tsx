@@ -1,13 +1,30 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
-import { useI18n } from "@/i18n/I18nProvider";
+import { useOptionalI18n, type ClientTranslator } from "@/i18n/I18nProvider";
 import Header from "@/components/Header";
 import { TOOLS, toolCopy } from "@/lib/tools";
 
 // Cliente de propósito: o not-found não recebe `params`, então o idioma vem do contexto (layout [lang]).
 export default function NotFound() {
-  const { t, raw } = useI18n();
+  const i18n = useOptionalI18n();
+  // Sem o layout de idioma (caminho fora de qualquer /en, /es, /pt): mensagem mínima, nunca um erro.
+  if (!i18n) {
+    return (
+      <html lang="en">
+        <body style={{ fontFamily: "system-ui, sans-serif", padding: "4rem 1.5rem", textAlign: "center", color: "#44403c" }}>
+          <h1 style={{ fontSize: "1.75rem", fontWeight: 600 }}>404</h1>
+          <p>
+            Page not found. <a href="/">ResolveLabs</a>
+          </p>
+        </body>
+      </html>
+    );
+  }
+  return <LocalizedNotFound {...i18n} />;
+}
+
+function LocalizedNotFound({ t, raw }: ClientTranslator) {
   const items = raw("common.tools.items");
   return (
     <>
