@@ -5,6 +5,7 @@ import { User } from "@/models/User";
 import { expireProIfNeeded, issueSession, publicUser } from "@/lib/serverAuth";
 import { parseEmail } from "@/lib/validation";
 import { clientIp, rateLimit } from "@/lib/rateLimit";
+import { logActivity } from "@/lib/activityLog";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,10 +44,14 @@ export async function POST(request: NextRequest) {
 
     const passwordHash = user?.password ?? (await getDummyHash());
     const valid = await bcrypt.compare(password, passwordHash);
-    if (!user || !valid) return NextResponse.json(INVALID_CREDENTIALS, { status: 401 });
+    if (!user || !valid) {
+      await logActivity(request, { event: "login_failed", email });
+      return NextResponse.json(INVALID_CREDENTIALS, { status: 401 });
+    }
 
     await expireProIfNeeded(user);
 
+    await logActivity(request, { event: "login", user: { id: user.id, email: user.email, role: user.role } });
     const response = NextResponse.json({ user: publicUser(user) });
     await issueSession(response, user);
     return response;

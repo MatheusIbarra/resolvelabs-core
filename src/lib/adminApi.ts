@@ -36,6 +36,59 @@ export interface AdminToolStatRow {
   count: number;
 }
 
+export type ActivityEventName = "pageview" | "view" | "use" | "usage" | "usage_blocked" | "login" | "login_failed" | "register" | "logout";
+
+export interface AdminActivityLog {
+  id: string;
+  createdAt: string;
+  event: ActivityEventName;
+  userId: string | null;
+  email: string | null;
+  role: string | null;
+  tool: string | null;
+  kind: string | null;
+  path: string | null;
+  referrer: string | null;
+  ip: string;
+  userAgent: string | null;
+  language: string | null;
+  country: string | null;
+  region: string | null;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  timezone: string | null;
+}
+
+export interface ActivityFilters {
+  days: number;
+  event?: string;
+  email?: string;
+  userId?: string;
+  ip?: string;
+  tool?: string;
+  country?: string;
+  path?: string;
+}
+
+export interface AdminActivitySummary {
+  totals: { events: number; users: number; ips: number; logins: number; failedLogins: number };
+  byEvent: { event: ActivityEventName; count: number }[];
+  byDay: { day: string; count: number }[];
+  topUsers: { userId: string; email: string; count: number; ips: number; last: string }[];
+  topIps: { ip: string; count: number; users: number; country: string | null; city: string | null }[];
+  topPlaces: { country: string; region: string | null; city: string | null; count: number }[];
+  topTools: { tool: string; count: number }[];
+  topPaths: { path: string; count: number }[];
+}
+
+function activityQuery(filters: ActivityFilters, cursor?: string | null): string {
+  const params = new URLSearchParams();
+  for (const [k, v] of Object.entries(filters)) if (v !== undefined && v !== "") params.set(k, String(v));
+  if (cursor) params.set("cursor", cursor);
+  return params.toString();
+}
+
 async function adminRequest<T>(url: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
@@ -69,6 +122,10 @@ export const adminApi = {
   deleteCoupon: (id: string) => adminRequest<{ ok: true }>(`/api/admin/coupons/${id}`, { method: "DELETE" }),
 
   toolStats: (days: number) => adminRequest<{ days: number; rows: AdminToolStatRow[] }>(`/api/admin/stats?days=${days}`),
+
+  activity: (filters: ActivityFilters, cursor?: string | null) =>
+    adminRequest<{ total: number | null; nextCursor: string | null; logs: AdminActivityLog[] }>(`/api/admin/activity?${activityQuery(filters, cursor)}`),
+  activitySummary: (filters: ActivityFilters) => adminRequest<AdminActivitySummary>(`/api/admin/activity/summary?${activityQuery(filters)}`),
 
   listAffiliates: () => adminRequest<{ affiliates: AdminAffiliate[] }>("/api/admin/affiliates"),
 };

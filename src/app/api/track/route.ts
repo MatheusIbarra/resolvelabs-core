@@ -3,13 +3,16 @@ import { connectDB } from "@/lib/mongodb";
 import { ToolStat } from "@/models/ToolStat";
 import { clientIp, rateLimit } from "@/lib/rateLimit";
 import { isTrackEvent, isTrackKind, isTrackedTool } from "@/lib/trackEvents";
+import { getCurrentUser } from "@/lib/serverAuth";
+import { logActivity } from "@/lib/activityLog";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Contagem anônima de uso das páginas públicas. Aceita só { tool, event, kind? } de listas fixas
- * (o resto do body é ignorado) e incrementa um contador diário. Não grava IP, usuário nem arquivo.
+ * Uso das páginas públicas. Aceita só { tool, event, kind? } de listas fixas (o resto do body é ignorado):
+ * incrementa o contador diário (ToolStat, anônimo) e grava um registro detalhado (ActivityLog) com o usuário
+ * logado (resolvido no servidor pelo cookie), IP, local aproximado e navegador. Nunca grava nome ou conteúdo de arquivo.
  */
 export async function POST(request: NextRequest) {
   const limited = rateLimit(`track:${clientIp(request)}`, 120, 10 * 60_000);
@@ -33,6 +36,17 @@ export async function POST(request: NextRequest) {
     );
   } catch (err) {
     console.error("[track]", err); // métrica nunca deve afetar o usuário
+  }
+
+  // Visitas já entram no log pela rota /api/activity; aqui só o uso (evita contar a mesma visita duas vezes).
+  if (body.event === "use") {
+    const user = await getCurrentUser(request).catch(() => null);
+    await logActivity(request, {
+      event: "use",
+      user: user && { id: user.id, email: user.email, role: user.role },
+      tool: body.tool,
+      kind: kind || undefined,
+    });
   }
   return new NextResponse(null, { status: 204 });
 }

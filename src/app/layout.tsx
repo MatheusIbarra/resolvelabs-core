@@ -6,6 +6,7 @@ import { ToastProvider } from "@/components/ui/Toast";
 import { PaywallProvider } from "@/hooks/usePaywall";
 import SupportWidget from "@/components/SupportWidget";
 import RouteProgress from "@/components/ui/RouteProgress";
+import PageViewLogger from "@/components/PageViewLogger";
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${geistSans.variable} ${geistMono.variable} font-sans bg-stone-50 text-stone-800 min-h-screen flex flex-col antialiased`}
       >
         <RouteProgress />
+        <PageViewLogger />
         <ToastProvider>
           <AuthProvider>
             <PaywallProvider>

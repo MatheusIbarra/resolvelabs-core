@@ -6,12 +6,14 @@ import UsersTab from "./UsersTab";
 import CouponsTab from "./CouponsTab";
 import AffiliatesTab from "./AffiliatesTab";
 import UsageTab from "./UsageTab";
+import ActivityTab from "./ActivityTab";
 
 const TABS = [
   { id: "users", label: "Usuários e PRO", Component: UsersTab },
   { id: "coupons", label: "Cupons", Component: CouponsTab },
   { id: "affiliates", label: "Afiliados", Component: AffiliatesTab },
   { id: "usage", label: "Uso das ferramentas", Component: UsageTab },
+  { id: "activity", label: "Logs de acesso", Component: ActivityTab },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];

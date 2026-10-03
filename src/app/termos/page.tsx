@@ -45,6 +45,7 @@ const SECTIONS: { title: string; items: string[] }[] = [
     title: "6. Coleta de Dados Cadastrais",
     items: [
       "Para a prestação do serviço e suporte técnico, armazenamos apenas os dados de conta do Usuário: E-mail, Número de Celular e histórico de pagamentos e acessos. Estes dados não são vendidos ou compartilhados com terceiros para fins de marketing.",
+      "6.1. Registros de acesso: para segurança, prevenção de fraudes e melhoria do serviço, registramos as páginas acessadas e as ferramentas utilizadas, junto com o endereço IP, a localização aproximada derivada do IP, o navegador e o sistema do aparelho e, quando houver login, a conta associada. Nunca registramos o conteúdo nem o nome dos arquivos processados no navegador. Esses registros são apagados automaticamente após 180 dias.",
     ],
   },
   {

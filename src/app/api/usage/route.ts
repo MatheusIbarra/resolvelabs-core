@@ -3,6 +3,7 @@ import { User } from "@/models/User";
 import { getCurrentUser, unauthenticated } from "@/lib/serverAuth";
 import { getTool } from "@/lib/tools";
 import { rateLimit } from "@/lib/rateLimit";
+import { logActivity } from "@/lib/activityLog";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,8 +29,13 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser(request);
     if (!user) return unauthenticated();
 
-    // PRO e admin não consomem cota.
-    if (user.role !== "free") return NextResponse.json({ usageCount: user.usageCount });
+    const who = { id: user.id, email: user.email, role: user.role };
+
+    // PRO e admin não consomem cota (mas o uso entra no log).
+    if (user.role !== "free") {
+      if (body.refund !== true) await logActivity(request, { event: "usage", user: who, tool: tool.slug });
+      return NextResponse.json({ usageCount: user.usageCount });
+    }
 
     if (body.refund === true) {
       // Estorno limitado: evita usar o endpoint para zerar a cota repetidamente.
@@ -49,8 +55,10 @@ export async function POST(request: NextRequest) {
       { new: true },
     );
     if (!updated) {
+      await logActivity(request, { event: "usage_blocked", user: who, tool: tool.slug });
       return NextResponse.json({ error: "Limite gratuito atingido.", code: "LIMIT_REACHED" }, { status: 403 });
     }
+    await logActivity(request, { event: "usage", user: who, tool: tool.slug });
     return NextResponse.json({ usageCount: updated.usageCount });
   } catch (err) {
     console.error("[usage]", err);

@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
 import { isDuplicateKeyError, parseEmail, parsePhone, passwordError } from "@/lib/validation";
 import { clientIp, rateLimit } from "@/lib/rateLimit";
+import { logActivity } from "@/lib/activityLog";
 import { generateAffiliateCode, parseAffiliateCode, REF_COOKIE } from "@/lib/affiliate";
 
 export const runtime = "nodejs";
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
           affiliateCode: generateAffiliateCode(),
           ...(referrer && refCode ? { referredBy: refCode } : {}),
         });
+        await logActivity(request, { event: "register", user: { id: user.id, email: user.email, role: user.role } });
         const response = NextResponse.json(
           { user: { id: user.id, email: user.email, role: user.role } },
           { status: 201 },

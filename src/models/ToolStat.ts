@@ -1,6 +1,6 @@
 import mongoose, { Schema, type Model } from "mongoose";
 
-/** Contador diário agregado por ferramenta/evento/tipo. Sem usuário, IP ou conteúdo: só contagens. */
+/** Contador diário agregado por ferramenta/evento/tipo. Sem usuário, IP ou conteúdo: só contagens. O detalhe por usuário/IP fica em ActivityLog. */
 export interface IToolStat {
   /** Dia em UTC (AAAA-MM-DD). */
   day: string;

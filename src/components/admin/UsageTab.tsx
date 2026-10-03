@@ -48,7 +48,7 @@ export default function UsageTab() {
     <section>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-xl text-sm text-stone-600">
-          Contagem anônima das páginas públicas (sem usuário, IP ou conteúdo de arquivo). “Uso” é quando a pessoa realmente abre um arquivo ou gera dados.
+          Contagem agregada das páginas públicas (sem usuário, IP ou conteúdo de arquivo). “Uso” é quando a pessoa realmente abre um arquivo ou gera dados. Para ver quem acessou e de onde, use “Logs de acesso”.
         </p>
         <div className="flex gap-2">
           {PERIODS.map((p) => (
