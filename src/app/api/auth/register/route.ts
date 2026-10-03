@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import { User } from "@/models/User";
-import { isDuplicateKeyError, parseEmail, parsePhone, passwordError } from "@/lib/validation";
+import { isDuplicateKeyError, parseEmail, passwordError } from "@/lib/validation";
 import { clientIp, rateLimit } from "@/lib/rateLimit";
 import { logActivity } from "@/lib/activityLog";
 import { generateAffiliateCode, parseAffiliateCode, REF_COOKIE } from "@/lib/affiliate";
@@ -25,15 +25,12 @@ export async function POST(request: NextRequest) {
     return apiError(request, "invalidBody", 400);
   }
 
-  // Só lemos email, password, phone, termsAccepted e ref. Qualquer outro campo (ex.: role) é ignorado.
+  // Só lemos email, password, termsAccepted e ref. Qualquer outro campo (ex.: role) é ignorado.
   const email = parseEmail(body?.email);
   if (!email) return apiError(request, "invalidEmail", 400);
 
   const pwError = passwordError(body?.password);
   if (pwError) return apiError(request, pwError.key, 400, pwError.vars);
-
-  const phone = parsePhone(body?.phone);
-  if (!phone) return apiError(request, "invalidPhone", 400);
 
   if (body?.termsAccepted !== true) {
     return apiError(request, "termsRequired", 400);
@@ -52,7 +49,6 @@ export async function POST(request: NextRequest) {
         const user = await User.create({
           email,
           password: hash,
-          phone,
           termsAccepted: true,
           termsAcceptedAt: new Date(),
           role: "free",

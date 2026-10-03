@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { ADMIN, FREE_LIMIT, USER_PASSWORD, USER_PHONE } from "./support/e2e-env";
+import { ADMIN, FREE_LIMIT, USER_PASSWORD } from "./support/e2e-env";
 import { SAMPLE_STATEMENT, buildStatementPdf } from "./support/pdf";
 
 // Os cenários compartilham o banco e o usuário criado no primeiro teste: execução em sequência.
@@ -16,7 +16,7 @@ const statementPdf = () => ({
 /** Cria a conta pela API e deixa o navegador logado (os cookies da API valem para a página). */
 async function registerAndLogin(page: Page, email: string) {
   const credentials = { email, password: USER_PASSWORD };
-  const register = await page.request.post("/api/auth/register", { data: { ...credentials, phone: USER_PHONE, termsAccepted: true } });
+  const register = await page.request.post("/api/auth/register", { data: { ...credentials, termsAccepted: true } });
   expect(register.status(), "cadastro via API").toBe(201);
   const login = await page.request.post("/api/auth/login", { data: credentials });
   expect(login.status(), "login via API").toBe(200);
@@ -31,7 +31,6 @@ test.describe("ResolveLabs - jornada do usuário e do admin", () => {
 
     await page.getByLabel("E-mail").fill(freeUserEmail);
     await page.getByLabel("Senha").fill(USER_PASSWORD);
-    await page.getByLabel("Celular").fill(USER_PHONE);
     await page.getByRole("checkbox", { name: /Li e concordo/ }).check();
 
     // O formulário cadastra e em seguida faz login: espera as duas respostas da API.

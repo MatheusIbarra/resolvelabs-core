@@ -46,7 +46,7 @@ const en = {
     {
       title: "6. Collection of Registration Data",
       items: [
-        "To provide the service and technical support, we store only the User's account data: Email, Mobile Phone Number and payment and access history. This data is not sold or shared with third parties for marketing purposes.",
+        "To provide the service and technical support, we store only the User's account data: Email and payment and access history. This data is not sold or shared with third parties for marketing purposes.",
         "6.1. Access records: for security, fraud prevention and service improvement, we record the pages visited and the tools used, together with the IP address, the approximate location derived from the IP, the browser and the device's system and, when logged in, the associated account. We never record the content or the name of the files processed in the browser. These records are deleted automatically after 180 days.",
       ],
     },
@@ -112,7 +112,7 @@ const es: LegalMessages = {
     {
       title: "6. Recopilación de Datos de Registro",
       items: [
-        "Para la prestación del servicio y el soporte técnico, almacenamos solo los datos de cuenta del Usuario: Correo electrónico, Número de Móvil e historial de pagos y accesos. Estos datos no se venden ni se comparten con terceros con fines de marketing.",
+        "Para la prestación del servicio y el soporte técnico, almacenamos solo los datos de cuenta del Usuario: Correo electrónico e historial de pagos y accesos. Estos datos no se venden ni se comparten con terceros con fines de marketing.",
         "6.1. Registros de acceso: por seguridad, prevención de fraudes y mejora del servicio, registramos las páginas visitadas y las herramientas utilizadas, junto con la dirección IP, la ubicación aproximada derivada de la IP, el navegador y el sistema del dispositivo y, cuando hay sesión iniciada, la cuenta asociada. Nunca registramos el contenido ni el nombre de los archivos procesados en el navegador. Estos registros se eliminan automáticamente después de 180 días.",
       ],
     },
@@ -176,7 +176,7 @@ const pt: LegalMessages = {
     {
       title: "6. Coleta de Dados Cadastrais",
       items: [
-        "Para a prestação do serviço e suporte técnico, armazenamos apenas os dados de conta do Usuário: E-mail, Número de Celular e histórico de pagamentos e acessos. Estes dados não são vendidos ou compartilhados com terceiros para fins de marketing.",
+        "Para a prestação do serviço e suporte técnico, armazenamos apenas os dados de conta do Usuário: E-mail e histórico de pagamentos e acessos. Estes dados não são vendidos ou compartilhados com terceiros para fins de marketing.",
         "6.1. Registros de acesso: para segurança, prevenção de fraudes e melhoria do serviço, registramos as páginas acessadas e as ferramentas utilizadas, junto com o endereço IP, a localização aproximada derivada do IP, o navegador e o sistema do aparelho e, quando houver login, a conta associada. Nunca registramos o conteúdo nem o nome dos arquivos processados no navegador. Esses registros são apagados automaticamente após 180 dias.",
       ],
     },

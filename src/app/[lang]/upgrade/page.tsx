@@ -28,6 +28,7 @@ export default async function UpgradePage({ params }: LangParams) {
               </li>
             ))}
           </ul>
+          <p className="mb-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900">{t("common.pro.brazilOnly")}</p>
           <Link href="/checkout" className="btn-primary w-full py-3">{t("dashboard.upgrade.cta", { price: t("common.pro.priceLabel") })}</Link>
           <Link href="/dashboard" className="btn-secondary mt-3 w-full">{t("dashboard.upgrade.back")}</Link>
         </section>

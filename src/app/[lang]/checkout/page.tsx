@@ -161,6 +161,8 @@ export default function CheckoutPage() {
 
             {profileError && <Alert variant="error" className="mb-3">{profileError}</Alert>}
 
+            {!isPro && <p className="mb-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900" data-testid="brazil-only">{t("common.pro.brazilOnly")}</p>}
+
             <button onClick={action} disabled={isLoading || isPending || !profile} className="btn-primary mt-auto w-full py-3">
               {isPending ? pendingLabel : label}
             </button>

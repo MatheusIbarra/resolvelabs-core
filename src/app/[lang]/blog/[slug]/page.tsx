@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import JsonLd from "@/components/seo/JsonLd";
 import { createMdxComponents } from "@/components/blog/mdx-components";
-import { formatPostDate, getAllPosts, getPostBySlug, postLocales } from "@/lib/blog";
+import { formatPostDate, getAllPosts, getPostBySlug, postLocales, postSlugFor } from "@/lib/blog";
 import { LOCALES } from "@/i18n/config";
 import { getTranslator, pageLocale } from "@/i18n/server";
 import { buildAlternates, buildOpenGraph } from "@/i18n/seo";
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const post = getPostBySlug(locale, p.slug);
   if (!post) return {};
   const title = `${post.title} | ResolveLabs`;
-  const alternates = buildAlternates(locale, `/blog/${post.slug}`, { only: postLocales(post.slug) });
+  const alternates = buildAlternates(locale, `/blog/${post.slug}`, { only: postLocales(post.key), pathFor: (l) => `/blog/${postSlugFor(post.key, l)}` });
   return {
     title,
     description: post.description,

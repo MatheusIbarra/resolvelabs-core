@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { publicToolPaths } from "@/lib/seo-tools";
 import { absoluteUrl } from "@/lib/site";
-import { getAllPosts, postLocales } from "@/lib/blog";
+import { getAllPosts, postLocales, postSlugFor } from "@/lib/blog";
 import { HREFLANG, LOCALES, DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 import { localizePath } from "@/i18n/paths";
 
@@ -32,12 +32,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const latest = LOCALES.flatMap((l) => getAllPosts(l)).sort((a, b) => ((b.updated ?? b.date) > (a.updated ?? a.date) ? 1 : -1))[0];
   const blog: Entry[] = [
     ...entriesFor("/blog", blogLocales, { lastModified: latest?.updated ?? latest?.date, changeFrequency: "weekly", priority: 0.7 }),
-    ...LOCALES.flatMap((l) => getAllPosts(l).map((p) => p.slug))
-      .filter((slug, i, all) => all.indexOf(slug) === i)
-      .flatMap((slug) => {
-        const post = getAllPosts(postLocales(slug)[0]).find((p) => p.slug === slug)!;
-        return entriesFor(`/blog/${slug}`, postLocales(slug), { lastModified: post.updated ?? post.date, changeFrequency: "monthly", priority: 0.6 });
-      }),
+    ...[...new Set(LOCALES.flatMap((l) => getAllPosts(l).map((p) => p.key)))].flatMap((key) => {
+      const locales = postLocales(key);
+      const post = getAllPosts(locales[0]).find((p) => p.key === key)!;
+      const urlOf = (l: Locale) => absoluteUrl(localizePath(l, `/blog/${postSlugFor(key, l)}`));
+      const languages: Record<string, string> = Object.fromEntries(locales.map((l) => [HREFLANG[l], urlOf(l)]));
+      languages["x-default"] = urlOf(locales.includes(DEFAULT_LOCALE) ? DEFAULT_LOCALE : locales[0]);
+      return locales.map((l): Entry => ({ url: urlOf(l), alternates: { languages }, lastModified: post.updated ?? post.date, changeFrequency: "monthly", priority: 0.6 }));
+    }),
   ];
   return [...pages, ...blog];
 }

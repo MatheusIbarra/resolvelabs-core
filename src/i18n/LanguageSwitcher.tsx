@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname as useRawPathname } from "next/navigation";
-import { LOCALES, LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE_SECONDS, LOCALE_NAMES, isLocale } from "./config";
+import { HREFLANG, LOCALES, LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE_SECONDS, LOCALE_NAMES, isLocale } from "./config";
 import { useI18n } from "./I18nProvider";
 import { switchLocalePath } from "./paths";
 
@@ -16,7 +16,10 @@ export default function LanguageSwitcher({ className = "" }: { className?: strin
   const change = (value: string) => {
     if (!isLocale(value) || value === locale) return;
     document.cookie = `${LOCALE_COOKIE}=${value}; path=/; max-age=${LOCALE_COOKIE_MAX_AGE_SECONDS}; samesite=lax`;
-    window.location.assign(`${switchLocalePath(pathname ?? "/", value)}${window.location.search}${window.location.hash}`);
+    // Páginas com URL própria por idioma (artigos do blog) declaram as alternativas em <link rel="alternate" hreflang>.
+    const alt = document.querySelector<HTMLLinkElement>(`link[rel="alternate"][hreflang="${HREFLANG[value]}"]`);
+    const target = alt ? new URL(alt.href).pathname : switchLocalePath(pathname ?? "/", value);
+    window.location.assign(`${target}${window.location.search}${window.location.hash}`);
   };
 
   return (

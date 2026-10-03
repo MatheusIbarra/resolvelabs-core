@@ -13,14 +13,6 @@ type Mode = "login" | "register";
 
 const ALT_HREF: Record<Mode, string> = { login: "/register", register: "/login" };
 
-/** Máscara brasileira: (XX) XXXXX-XXXX. */
-function maskPhone(value: string): string {
-  const d = value.replace(/\D/g, "").slice(0, 11);
-  if (d.length <= 2) return d.length ? `(${d}` : "";
-  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
-  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-}
-
 /** Só aceita caminhos internos para evitar open redirect. */
 function safeNext(locale: Locale): string {
   const next = new URLSearchParams(window.location.search).get("next");
@@ -42,7 +34,6 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const toast = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isPending, setIsPending] = useState(false);
   // Entre login e cadastro o destino (?next=) precisa acompanhar o usuário.
@@ -75,16 +66,12 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     try {
       const credentials = { email, password };
       if (mode === "register") {
-        if (phone.replace(/\D/g, "").length !== 11) {
-          setError(t("auth.phoneInvalid"));
-          return;
-        }
         if (!termsAccepted) {
           setError(t("auth.termsRequired"));
           return;
         }
         // A indicação vai no cookie resolvelabs_ref (definido pelo middleware em ?ref=CODIGO).
-        const registered = await post("/api/auth/register", { ...credentials, phone, termsAccepted });
+        const registered = await post("/api/auth/register", { ...credentials, termsAccepted });
         if (!registered.ok) {
           setError(registered.error ?? t("msg.auth.network"));
           return;
@@ -143,19 +130,6 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
         {mode === "register" && (
           <>
-            <label htmlFor="phone" className="label">{t("auth.phone")}</label>
-            <input
-              id="phone"
-              type="tel"
-              inputMode="numeric"
-              autoComplete="tel-national"
-              required
-              value={phone}
-              onChange={(e) => setPhone(maskPhone(e.target.value))}
-              placeholder={t("auth.phonePlaceholder")}
-              className="input mb-5"
-            />
-
             <label htmlFor="terms" className="mb-5 flex cursor-pointer items-start gap-3 rounded-md border border-stone-200 bg-stone-50 p-3 text-sm text-stone-700">
               <input
                 id="terms"
@@ -175,7 +149,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
         {error && <Alert variant="error" className="mb-5">{error}</Alert>}
 
-        <button type="submit" disabled={isPending || !email || !password || (mode === "register" && (!phone || !termsAccepted))} className="btn-primary w-full py-3">
+        <button type="submit" disabled={isPending || !email || !password || (mode === "register" && !termsAccepted)} className="btn-primary w-full py-3">
           {isPending ? <LoadingLabel>{t(`auth.${mode}.pending`)}</LoadingLabel> : t(`auth.${mode}.submit`)}
         </button>
       </form>

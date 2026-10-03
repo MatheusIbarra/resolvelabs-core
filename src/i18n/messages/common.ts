@@ -34,6 +34,7 @@ const en = {
   pro: {
     priceLabel: "R$ 7.99/month",
     trialLabel: "{days} days free, then {price}",
+    brazilOnly: "PRO can currently only be purchased in Brazil (prices in BRL). Other countries coming soon.",
     benefits: ["Unlimited PDF to OFX conversions", "Access to the XML validator", "Access to the image optimizer"],
   },
   tools: {
@@ -186,6 +187,7 @@ const es: CommonMessages = {
   pro: {
     priceLabel: "R$ 7,99/mes",
     trialLabel: "{days} días gratis, luego {price}",
+    brazilOnly: "Por ahora PRO solo se puede comprar en Brasil (precios en BRL). Otros países próximamente.",
     benefits: ["Conversiones ilimitadas de PDF a OFX", "Acceso al validador de XML", "Acceso al optimizador de imágenes"],
   },
   tools: {
@@ -336,6 +338,7 @@ const pt: CommonMessages = {
   pro: {
     priceLabel: "R$ 7,99/mês",
     trialLabel: "{days} dias grátis, depois {price}",
+    brazilOnly: "Por enquanto, o PRO só pode ser comprado no Brasil (preços em BRL). Outros países em breve.",
     benefits: ["Conversões infinitas de PDF para OFX", "Acesso ao Validador de XML", "Acesso ao Otimizador de Imagens"],
   },
   tools: {

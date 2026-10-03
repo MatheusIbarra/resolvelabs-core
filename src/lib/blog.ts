@@ -8,7 +8,10 @@ import { isValidToolSlug, validToolSlugs } from "./tool-links";
 import { INTL_LOCALE, LOCALES, type Locale } from "@/i18n/config";
 
 export interface PostMeta {
+  /** Slug da URL neste idioma (frontmatter `slug`; sem ele, o nome do arquivo). */
   slug: string;
+  /** Nome do arquivo: o mesmo nos três idiomas, liga as traduções. */
+  key: string;
   title: string;
   description: string;
   /** AAAA-MM-DD */
@@ -44,11 +47,12 @@ function parse(path: string, raw: string): (Post & { draft: boolean; locale: Loc
   const [, , , lang, file] = path.split("/");
   const locale = LOCALES.find((l) => l === lang);
   if (!locale) throw new Error(`[blog] ${path}: pasta de idioma inválida (use ${LOCALES.join(", ")}).`);
-  const slug = file.replace(/\.mdx$/, "");
+  const key = file.replace(/\.mdx$/, "");
   const { data, content } = matter(raw);
   const post: Post & { draft: boolean; locale: Locale } = {
     locale,
-    slug,
+    key,
+    slug: typeof data.slug === "string" && data.slug.trim() ? data.slug.trim() : key,
     title: requiredString(data, "title", file),
     description: requiredString(data, "description", file),
     date: toDay(data.date, "date", file),
@@ -79,9 +83,14 @@ export function getPostBySlug(locale: Locale, slug: string): Post | undefined {
   return POSTS.find((p) => p.locale === locale && p.slug === slug);
 }
 
-/** Idiomas em que o artigo existe (para o hreflang: só entram traduções reais). */
-export function postLocales(slug: string): Locale[] {
-  return LOCALES.filter((l) => POSTS.some((p) => p.locale === l && p.slug === slug));
+/** Idiomas em que o artigo (identificado por `key`) existe: o hreflang só lista traduções reais. */
+export function postLocales(key: string): Locale[] {
+  return LOCALES.filter((l) => POSTS.some((p) => p.locale === l && p.key === key));
+}
+
+/** Slug do artigo em um idioma (cada tradução pode ter o seu). */
+export function postSlugFor(key: string, locale: Locale): string | undefined {
+  return POSTS.find((p) => p.locale === locale && p.key === key)?.slug;
 }
 
 /** "2 de outubro de 2026" (fixo em UTC: a data do post não muda com o fuso do leitor). */

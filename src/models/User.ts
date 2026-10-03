@@ -10,7 +10,6 @@ export interface IUser {
   planExpiresAt?: Date;
   usageCount: number;
   /** Celular (somente dígitos, DDD + 9 dígitos). */
-  phone?: string;
   /** Aceite dos Termos de Uso no cadastro. */
   termsAccepted: boolean;
   termsAcceptedAt?: Date;
@@ -50,14 +49,6 @@ const UserSchema = new Schema<IUser>(
     role: { type: String, enum: ROLES, default: "free", required: true },
     planExpiresAt: { type: Date },
     usageCount: { type: Number, default: 0, min: 0 },
-    // Obrigatórios só na criação: contas anteriores ao campo continuam salvando normalmente.
-    phone: {
-      type: String,
-      trim: true,
-      required: function (this: { isNew: boolean }) {
-        return this.isNew;
-      },
-    },
     termsAccepted: { type: Boolean, required: true, default: true },
     termsAcceptedAt: { type: Date },
     affiliateCode: { type: String, unique: true, sparse: true, uppercase: true, trim: true },

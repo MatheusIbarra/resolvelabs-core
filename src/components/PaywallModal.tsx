@@ -108,7 +108,7 @@ export default function PaywallModal({ isOpen, reason, onClose }: PaywallModalPr
 
         {config.showPro && (
           <p className="mt-3 text-center text-xs text-stone-500">
-            {t("common.paywall.trialLine", { trial: t("common.pro.trialLabel", { days: PRO_TRIAL_DAYS, price: t("common.pro.priceLabel") }) })}
+            {t("common.paywall.trialLine", { trial: t("common.pro.trialLabel", { days: PRO_TRIAL_DAYS, price: t("common.pro.priceLabel") }) })} {t("common.pro.brazilOnly")}
           </p>
         )}
       </div>
