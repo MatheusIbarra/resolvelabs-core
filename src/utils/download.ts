@@ -1,3 +1,5 @@
+import { activeTranslator } from "@/i18n/active";
+
 /** Dispara o download de um Blob no navegador, sem enviar nada a servidor algum. */
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
@@ -14,5 +16,5 @@ export function downloadBlob(blob: Blob, filename: string): void {
 
 /** "extrato.pdf" -> "extrato" */
 export function baseName(filename: string): string {
-  return filename.replace(/\.[^./\\]+$/, "") || "arquivo";
+  return filename.replace(/\.[^./\\]+$/, "") || activeTranslator().t("tools.util.fileFallbackName");
 }

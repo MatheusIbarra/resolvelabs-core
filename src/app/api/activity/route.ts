@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
  * Usuário, IP, local e navegador vêm do servidor (cookie e cabeçalhos), nunca do cliente.
  */
 export async function POST(request: NextRequest) {
-  const limited = rateLimit(`activity:${clientIp(request)}`, 240, 10 * 60_000);
+  const limited = rateLimit(`activity:${clientIp(request)}`, 240, 10 * 60_000, request);
   if (limited) return limited;
 
   let body: { path?: unknown; referrer?: unknown };

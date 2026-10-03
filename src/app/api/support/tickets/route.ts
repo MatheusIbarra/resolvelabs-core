@@ -1,3 +1,4 @@
+import { apiError } from "@/lib/apiError";
 import { NextResponse, type NextRequest } from "next/server";
 import { Ticket } from "@/models/Ticket";
 import { User } from "@/models/User";
@@ -14,13 +15,12 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const INTERNAL_ERROR = { error: "Erro interno. Tente novamente." };
 
 /** Lista os tickets do usuário logado; para admin, todos (com o e-mail do autor). */
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
-    if (!user) return unauthenticated();
+    if (!user) return unauthenticated(request);
 
     const isAdmin = user.role === "admin";
     const status = request.nextUrl.searchParams.get("status");
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     console.error("[support/tickets GET]", err);
-    return NextResponse.json(INTERNAL_ERROR, { status: 500 });
+    return apiError(request, "internal", 500);
   }
 }
 
@@ -50,30 +50,27 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Corpo da requisição inválido." }, { status: 400 });
+    return apiError(request, "invalidBody", 400);
   }
 
   const subject = parseText(body.subject, SUBJECT_MAX);
-  if (!subject) return NextResponse.json({ error: `Informe um assunto (até ${SUBJECT_MAX} caracteres).` }, { status: 400 });
+  if (!subject) return apiError(request, "ticketSubject", 400, { max: SUBJECT_MAX });
   const message = parseText(body.message, MESSAGE_MAX);
-  if (!message) return NextResponse.json({ error: `Informe a mensagem (até ${MESSAGE_MAX} caracteres).` }, { status: 400 });
+  if (!message) return apiError(request, "ticketMessage", 400, { max: MESSAGE_MAX });
 
   try {
     const user = await getCurrentUser(request);
-    if (!user) return unauthenticated();
+    if (!user) return unauthenticated(request);
 
     const active = await Ticket.countDocuments({ userId: user._id, status: { $ne: "closed" } });
     if (active >= MAX_ACTIVE_TICKETS_PER_USER) {
-      return NextResponse.json(
-        { error: `Você já tem ${MAX_ACTIVE_TICKETS_PER_USER} tickets em aberto. Aguarde a resposta ou use um deles.` },
-        { status: 429 },
-      );
+      return apiError(request, "ticketLimit", 429, { max: MAX_ACTIVE_TICKETS_PER_USER });
     }
 
     const ticket = await Ticket.create({ userId: user._id, subject, messages: [{ sender: "user", message }] });
     return NextResponse.json({ ticket: serializeTicket(ticket) }, { status: 201 });
   } catch (err) {
     console.error("[support/tickets POST]", err);
-    return NextResponse.json(INTERNAL_ERROR, { status: 500 });
+    return apiError(request, "internal", 500);
   }
 }

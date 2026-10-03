@@ -10,10 +10,10 @@ export function parseEmail(value: unknown): string | null {
   return email.length <= 254 && EMAIL_RE.test(email) ? email : null;
 }
 
-export function passwordError(value: unknown): string | null {
-  if (typeof value !== "string") return "Senha inválida.";
-  if (value.length < PASSWORD_MIN) return `A senha deve ter pelo menos ${PASSWORD_MIN} caracteres.`;
-  if (new TextEncoder().encode(value).length > PASSWORD_MAX_BYTES) return "A senha é longa demais (máximo de 72 bytes).";
+export function passwordError(value: unknown): { key: "passwordInvalid" | "passwordShort" | "passwordLong"; vars?: { min: number } } | null {
+  if (typeof value !== "string") return { key: "passwordInvalid" };
+  if (value.length < PASSWORD_MIN) return { key: "passwordShort", vars: { min: PASSWORD_MIN } };
+  if (new TextEncoder().encode(value).length > PASSWORD_MAX_BYTES) return { key: "passwordLong" };
   return null;
 }
 

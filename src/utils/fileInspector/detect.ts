@@ -11,7 +11,6 @@ const EXTENSIONS: Record<string, FileKind> = {
 
 export const ACCEPT = ".xlsx,.xlsm,.xls,.csv,.tsv,.ods,.ofx,.qfx,.xml,.json,.pdf,.png,.jpg,.jpeg,.webp,.gif";
 
-export const SUPPORTED_LABEL = "Aceitamos XLSX, XLS, CSV, OFX, XML, JSON, PDF, PNG e JPG";
 
 const startsWith = (bytes: Uint8Array, signature: number[]) => signature.every((b, i) => bytes[i] === b);
 const ascii = (bytes: Uint8Array, length: number) => String.fromCharCode(...bytes.slice(0, length));

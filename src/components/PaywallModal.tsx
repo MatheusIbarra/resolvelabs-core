@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { PAYWALL_COPY, PRO_BENEFITS, PRO_PRICE_LABEL, PRO_TRIAL_DAYS, type DenyReason, type PaywallAction } from "@/lib/content";
+import { useRouter } from "@/i18n/navigation";
+import { useI18n } from "@/i18n/I18nProvider";
+import { FREE_PDF_LIMIT, PAYWALL_CONFIG, PRO_TRIAL_DAYS, type DenyReason, type PaywallAction } from "@/lib/content";
 
 interface PaywallModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ const ICON_PATH: Record<DenyReason, string> = {
 
 export default function PaywallModal({ isOpen, reason, onClose }: PaywallModalProps) {
   const router = useRouter();
+  const { t, raw } = useI18n();
   const primaryRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -36,10 +38,12 @@ export default function PaywallModal({ isOpen, reason, onClose }: PaywallModalPr
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
-  const copy = PAYWALL_COPY[reason];
+  const config = PAYWALL_CONFIG[reason];
+  const vars = { limit: FREE_PDF_LIMIT };
   const isAuth = reason === "AUTH_REQUIRED";
 
   const go = (action: PaywallAction) => {
+    // O `next` leva a URL do navegador (com idioma): o login volta exatamente para a mesma página.
     const next = action.returnHere ? `?next=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}` : "";
     router.push(`${action.href}${next}`);
   };
@@ -58,7 +62,7 @@ export default function PaywallModal({ isOpen, reason, onClose }: PaywallModalPr
         className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-xl animate-[scale-in_0.25s_cubic-bezier(0.22,1,0.36,1)] sm:p-8"
       >
         <button
-          aria-label="Fechar"
+          aria-label={t("common.ui.close")}
           onClick={onClose}
           className="absolute right-4 top-4 rounded-md p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-700"
         >
@@ -72,15 +76,15 @@ export default function PaywallModal({ isOpen, reason, onClose }: PaywallModalPr
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d={ICON_PATH[reason]} />
           </svg>
         </span>
-        <span className={`${isAuth ? "badge-brand" : "badge-warn"} mb-3 block w-fit`}>{copy.tag}</span>
+        <span className={`${isAuth ? "badge-brand" : "badge-warn"} mb-3 block w-fit`}>{t(`common.paywall.${config.textKey}.tag`, vars)}</span>
         <h2 id="paywall-title" className="mb-2 text-2xl font-semibold tracking-tight text-stone-900">
-          {copy.title}
+          {t(`common.paywall.${config.textKey}.title`, vars)}
         </h2>
-        <p className="mb-6 text-sm leading-relaxed text-stone-600">{copy.body}</p>
+        <p className="mb-6 text-sm leading-relaxed text-stone-600">{t(`common.paywall.${config.textKey}.body`, vars)}</p>
 
-        {copy.showPro && (
+        {config.showPro && (
           <ul className="mb-6 space-y-3">
-            {PRO_BENEFITS.map((benefit) => (
+            {raw("common.pro.benefits").map((benefit) => (
               <li key={benefit} className="flex items-start gap-3 text-sm text-stone-800">
                 <svg className="mt-0.5 h-5 w-5 shrink-0 text-teal-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
@@ -92,19 +96,19 @@ export default function PaywallModal({ isOpen, reason, onClose }: PaywallModalPr
         )}
 
         <div className="flex flex-col gap-2">
-          <button ref={primaryRef} onClick={() => go(copy.cta)} className="btn-primary w-full py-3">
-            {copy.cta.label}
+          <button ref={primaryRef} onClick={() => go(config.cta)} className="btn-primary w-full py-3">
+            {t(`common.paywall.${config.textKey}.cta`)}
           </button>
-          {copy.secondary && (
-            <button onClick={() => go(copy.secondary!)} className="btn-secondary w-full py-3">
-              {copy.secondary.label}
+          {config.secondary && (
+            <button onClick={() => go(config.secondary!)} className="btn-secondary w-full py-3">
+              {t("common.paywall.authRequired.secondary")}
             </button>
           )}
         </div>
 
-        {copy.showPro && (
+        {config.showPro && (
           <p className="mt-3 text-center text-xs text-stone-500">
-            {PRO_TRIAL_DAYS} dias grátis, depois {PRO_PRICE_LABEL}. Pagamento seguro via Stripe, cancele quando quiser.
+            {t("common.paywall.trialLine", { trial: t("common.pro.trialLabel", { days: PRO_TRIAL_DAYS, price: t("common.pro.priceLabel") }) })}
           </p>
         )}
       </div>

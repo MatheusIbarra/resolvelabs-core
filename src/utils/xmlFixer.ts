@@ -1,3 +1,10 @@
+import { activeTranslator } from "@/i18n/active";
+
+import type { ClientDictionary } from "@/i18n/messages";
+
+type IssueKey = keyof ClientDictionary["tools"]["xml"]["issue"];
+/** Mensagem do relatório no idioma atual (textos em i18n/messages/tools.ts). */
+const I18N = (key: IssueKey, vars?: Record<string, string | number>) => activeTranslator().t(`tools.xml.issue.${key}`, vars);
 /**
  * Reparador de feeds XML do Google Merchant (RSS 2.0 `<item>` ou Atom `<entry>`), 100% no navegador.
  *
@@ -79,9 +86,9 @@ function sanitizeText(raw: string, mode: "strip" | "cdata"): SanitizedText {
   if (html !== null) {
     if (mode === "cdata") {
       if (wasCdata) return { value: raw, changed: false };
-      return { value: `<![CDATA[${html.replace(/\]\]>/g, "]]]]><![CDATA[>")}]]>`, changed: true, reason: "HTML preservado dentro de CDATA" };
+      return { value: `<![CDATA[${html.replace(/\]\]>/g, "]]]]><![CDATA[>")}]]>`, changed: true, reason: I18N("htmlCdata") };
     }
-    return { value: escapeXml(decodeEntities(stripHtml(html)).replace(/\s+/g, " ").trim()), changed: true, reason: "HTML removido" };
+    return { value: escapeXml(decodeEntities(stripHtml(html)).replace(/\s+/g, " ").trim()), changed: true, reason: I18N("htmlRemoved") };
   }
 
   if (wasCdata) return { value: raw, changed: false };
@@ -92,7 +99,7 @@ function sanitizeText(raw: string, mode: "strip" | "cdata"): SanitizedText {
     .replace(/<(?![/!?]|[a-z])/gi, "&lt;")
     .replace(/>/g, "&gt;");
   const changed = fixed !== text;
-  return { value: fixed, changed, reason: changed ? "Caracteres especiais escapados (& ou <)" : undefined };
+  return { value: fixed, changed, reason: changed ? I18N("escaped") : undefined };
 }
 
 // --- Preço e GTIN -------------------------------------------------------------------
@@ -180,12 +187,12 @@ export function fixMerchantXml(input: string, options: XmlFixOptions = {}): XmlF
       const slug = link ? slugify(decodeEntities(unwrapCdata(link.content).text).split("/").filter(Boolean).pop() ?? "") : "";
       itemId = slug || `item-${index + 1}`;
       body = idField ? replaceField(body, idField, escapeXml(itemId)) : `\n<${prefix}id>${escapeXml(itemId)}</${prefix}id>${body}`;
-      report("id", "fixed", `ID ausente: gerado automaticamente ("${itemId}"). Confira se corresponde ao seu SKU.`);
+      report("id", "fixed", I18N("idGenerated", { id: itemId }));
     } else {
-      report("id", "error", "ID ausente.");
+      report("id", "error", I18N("idMissing"));
     }
     if (itemId) {
-      if (seenIds.has(itemId)) report("id", "error", `ID duplicado (também no produto nº ${seenIds.get(itemId)! + 1}).`);
+      if (seenIds.has(itemId)) report("id", "error", I18N("idDuplicate", { n: seenIds.get(itemId)! + 1 }));
       else seenIds.set(itemId, index);
     }
 
@@ -196,42 +203,42 @@ export function fixMerchantXml(input: string, options: XmlFixOptions = {}): XmlF
       const result = sanitizeText(field.content, htmlMode);
       if (result.changed) {
         body = replaceField(body, field, result.value);
-        report(name, "fixed", `${result.reason}.`);
+        report(name, "fixed", result.reason ?? "");
       }
       const plain = decodeEntities(stripHtml(unwrapCdata(result.value).text));
-      if (name === "title" && plain.length > 150) report(name, "warning", `Título com ${plain.length} caracteres (limite do Google: 150).`);
-      if (name === "description" && plain.length > 5000) report(name, "warning", `Descrição com ${plain.length} caracteres (limite do Google: 5000).`);
+      if (name === "title" && plain.length > 150) report(name, "warning", I18N("titleLong", { n: plain.length }));
+      if (name === "description" && plain.length > 5000) report(name, "warning", I18N("descLong", { n: plain.length }));
     }
 
     // Campos obrigatórios --------------------------------------------------------------------
     for (const name of REQUIRED_TEXT_FIELDS) {
       const field = findField(body, name);
       const text = field ? decodeEntities(stripHtml(unwrapCdata(field.content).text)).trim() : "";
-      if (!text) report(name, "error", `Campo obrigatório "${name}" ${field ? "vazio" : "ausente"}.`);
+      if (!text) report(name, "error", I18N(field ? "requiredEmpty" : "requiredMissing", { field: name }));
     }
-    if (!findField(body, "availability")) report("availability", "warning", 'Campo "availability" ausente (ex.: in stock).');
+    if (!findField(body, "availability")) report("availability", "warning", I18N("availabilityMissing"));
 
     // Preço -----------------------------------------------------------------------------------
     for (const name of ["price", "sale_price"]) {
       const field = findField(body, name);
       if (!field) {
-        if (name === "price") report("price", "error", "Preço ausente.");
+        if (name === "price") report("price", "error", I18N("priceMissing"));
         continue;
       }
       const raw = field.content;
       if (!raw.trim()) {
-        report(name, "error", name === "price" ? "Preço vazio." : "Preço promocional vazio.");
+        report(name, "error", name === "price" ? I18N("priceEmpty") : I18N("salePriceEmpty"));
         continue;
       }
       const price = normalizePrice(raw, defaultCurrency);
       if (!price) {
-        report(name, "error", `Preço inválido: "${decodeEntities(raw).trim()}".`);
+        report(name, "error", I18N("priceInvalid", { value: decodeEntities(raw).trim() }));
         continue;
       }
       const normalized = `${price.value} ${price.currency}`;
       if (normalized !== raw.trim()) {
         body = replaceField(body, field, normalized);
-        report(name, "fixed", `Preço normalizado para "${normalized}".`);
+        report(name, "fixed", I18N("priceNormalized", { value: normalized }));
       }
     }
 
@@ -240,22 +247,22 @@ export function fixMerchantXml(input: string, options: XmlFixOptions = {}): XmlF
     if (gtinField) {
       const digits = decodeEntities(unwrapCdata(gtinField.content).text).replace(/[\s.-]/g, "");
       if (!digits) {
-        report("gtin", "error", "GTIN vazio.");
+        report("gtin", "error", I18N("gtinEmpty"));
       } else if (!isValidGtin(digits)) {
-        report("gtin", "error", `GTIN "${digits}" inválido (tamanho ou dígito verificador).`);
+        report("gtin", "error", I18N("gtinInvalid", { gtin: digits }));
       } else if (digits !== gtinField.content.trim()) {
         body = replaceField(body, gtinField, digits);
-        report("gtin", "fixed", "GTIN: máscara removida.");
+        report("gtin", "fixed", I18N("gtinMask"));
       }
     } else if (!findField(body, "mpn") && !findField(body, "identifier_exists")) {
-      report("gtin", "warning", 'Sem GTIN/MPN: informe os identificadores ou use identifier_exists = "no".');
+      report("gtin", "warning", I18N("noIdentifiers"));
     }
 
     return `${open}${body}${close}`;
   });
 
   if (itemCount === 0) {
-    issues.push({ itemIndex: -1, itemId: null, field: "feed", severity: "error", message: "Nenhum <item> ou <entry> encontrado no XML." });
+    issues.push({ itemIndex: -1, itemId: null, field: "feed", severity: "error", message: I18N("noItems") });
   }
 
   const stats = {

@@ -1,0 +1,68 @@
+---
+title: "How to generate valid CPFs and CNPJs for testing and staging"
+description: "Learn how the CPF and CNPJ check digits work, see the code to generate and validate test numbers and meet a Brazilian data generator that runs in your browser."
+date: "2026-10-02"
+author: "ResolveLabs Team"
+---
+
+When testing a sign-up form, an integration or a checkout flow, you need CPFs and CNPJs (Brazilian individual and company tax IDs) that **pass validation** without using real people's data. This guide explains how those numbers are formed and shows how to generate your own.
+
+## How the check digit works
+
+A CPF has 11 digits: nine base digits and two check digits. A CNPJ has 14: twelve base digits (eight for the company number and four for the branch) and two check digits. The check digits are calculated from the previous digits with a weighted sum and modulo 11. If any digit changes, validation fails.
+
+Two cautions:
+
+- Sequences of identical digits (`111.111.111-11`) pass the calculation but are rejected by the common validation rule, so discard them.
+- A randomly generated number with correct check digits **may belong to a real person or company**. Use it only in test environments and never in production.
+
+## TypeScript code
+
+```ts
+function digitoCpf(base: number[]): number {
+  const peso = base.length + 1;
+  const soma = base.reduce((acc, d, i) => acc + d * (peso - i), 0);
+  const resto = (soma * 10) % 11;
+  return resto === 10 ? 0 : resto;
+}
+
+export function gerarCpf(): string {
+  const base = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10));
+  base.push(digitoCpf(base));
+  base.push(digitoCpf(base));
+  return base.join("");
+}
+
+export function cpfValido(cpf: string): boolean {
+  const d = cpf.replace(/\D/g, "").split("").map(Number);
+  if (d.length !== 11 || d.every((n) => n === d[0])) return false;
+  return digitoCpf(d.slice(0, 9)) === d[9] && digitoCpf(d.slice(0, 10)) === d[10];
+}
+
+function digitoCnpj(base: number[]): number {
+  const pesos = base.length === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const resto = base.reduce((acc, d, i) => acc + d * pesos[i], 0) % 11;
+  return resto < 2 ? 0 : 11 - resto;
+}
+
+export function cnpjValido(cnpj: string): boolean {
+  const d = cnpj.replace(/\D/g, "").split("").map(Number);
+  if (d.length !== 14 || d.every((n) => n === d[0])) return false;
+  return digitoCnpj(d.slice(0, 12)) === d[12] && digitoCnpj(d.slice(0, 13)) === d[13];
+}
+```
+
+To check the functions, CPF `529.982.247-25` and CNPJ `11.222.333/0001-81` are valid, and changing the last digit of either makes `cpfValido` and `cnpjValido` return `false`.
+
+## Good practices for staging
+
+- **Separate environments:** test data only in staging.
+- **Generate in bulk:** for load and import tests, generate hundreds of records at once, with CPF, CNPJ, postal code (CEP) and PIX key in the same JSON.
+- **Test the error cases:** use a number with the last digit changed to make sure your validation rejects it.
+- **Don't reuse real personal data** in tests, even "just this once".
+
+## A ready-made generator in the browser
+
+If you don't want to maintain that code, the ResolveLabs Brazilian data generator builds the JSON with valid CPFs and CNPJs, postal codes and PIX keys, right in your browser.
+
+<ToolCta slug="mock-data-br">Choose the fields, the quantity and generate the test JSON. Everything runs in your browser, with a few free generations.</ToolCta>

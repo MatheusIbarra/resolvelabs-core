@@ -6,7 +6,8 @@ import UsageBadge from "./UsageBadge";
 import { DATA_TYPES, MAX_MOCK_RECORDS, generateMockRecords, seededRng, toFormattedJson, type DataTypeId } from "@/utils/mockGenerator";
 import { downloadBlob } from "@/utils/download";
 import { useToast } from "../ui/Toast";
-import { MSG, errorMessage } from "@/lib/messages";
+import { errorMessage } from "@/lib/messages";
+import { useI18n } from "@/i18n/I18nProvider";
 
 const FREE_GENERATIONS = 5;
 
@@ -16,10 +17,10 @@ interface Field {
   type: DataTypeId;
 }
 
-const INITIAL_FIELDS: Field[] = [
-  { id: 1, key: "documento", type: "cpf" },
-  { id: 2, key: "nome_completo", type: "nome" },
-  { id: 3, key: "chave_pix", type: "pix" },
+const initialFields = (names: [string, string, string]): Field[] => [
+  { id: 1, key: names[0], type: "cpf" },
+  { id: 2, key: names[1], type: "nome" },
+  { id: 3, key: names[2], type: "pix" },
 ];
 
 // Realce de sintaxe simples para JSON indentado.
@@ -40,10 +41,12 @@ function highlight(json: string) {
 }
 
 export default function MockDataGenerator() {
+  const { t, tn } = useI18n();
   const toast = useToast();
-  const [fields, setFields] = useState<Field[]>(INITIAL_FIELDS);
+  const [initial] = useState(() => initialFields([t("tools.mock.fieldDocument"), t("tools.mock.fieldName"), t("tools.mock.fieldPix")]));
+  const [fields, setFields] = useState<Field[]>(initial);
   const [count, setCount] = useState(5);
-  const [json, setJson] = useState(() => toFormattedJson(generateMockRecords(INITIAL_FIELDS, 2, seededRng(2026)))) // semente fixa: servidor e navegador geram o mesmo exemplo;
+  const [json, setJson] = useState(() => toFormattedJson(generateMockRecords(initial, 2, seededRng(2026)))) // semente fixa: servidor e navegador geram o mesmo exemplo;
   const [used, setUsed] = useState(3);
   const [copied, setCopied] = useState(false);
 
@@ -51,15 +54,15 @@ export default function MockDataGenerator() {
     setFields((fs) => fs.map((f) => (f.id === id ? { ...f, ...patch } : f)));
 
   const addField = () =>
-    setFields((fs) => [...fs, { id: Math.max(0, ...fs.map((f) => f.id)) + 1, key: `campo_${fs.length + 1}`, type: "cep" }]);
+    setFields((fs) => [...fs, { id: Math.max(0, ...fs.map((f) => f.id)) + 1, key: t("tools.mock.fieldN", { n: fs.length + 1 }), type: "cep" }]);
 
   const generate = () => {
     if (used >= FREE_GENERATIONS) {
-      toast.warning(MSG.mock.limitReached);
+      toast.warning(t("msg.mock.limitReached"));
       return;
     }
     if (fields.length === 0 || fields.some((f) => !f.key.trim())) {
-      toast.error(MSG.mock.emptyKeys);
+      toast.error(t("msg.mock.emptyKeys"));
       return;
     }
     const n = Math.min(Math.max(1, Math.floor(count) || 1), MAX_MOCK_RECORDS);
@@ -68,9 +71,9 @@ export default function MockDataGenerator() {
       setJson(toFormattedJson(generateMockRecords(fields, n)));
       setUsed((u) => u + 1);
       trackEvent("mock-data-br", "use");
-      toast.success(MSG.mock.generated(n));
+      toast.success(tn("msg.mock.generated", n));
     } catch (err) {
-      toast.error(errorMessage(err, MSG.mock.failed));
+      toast.error(errorMessage(err, t("msg.mock.failed")));
     }
   };
 
@@ -78,16 +81,16 @@ export default function MockDataGenerator() {
     try {
       await navigator.clipboard.writeText(json);
       setCopied(true);
-      toast.success(MSG.mock.copied);
+      toast.success(t("msg.mock.copied"));
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error(MSG.mock.copyFailed);
+      toast.error(t("msg.mock.copyFailed"));
     }
   };
 
   const download = () => {
     downloadBlob(new Blob([json], { type: "application/json" }), "mock-data-br.json");
-    toast.success(MSG.mock.downloaded);
+    toast.success(t("msg.mock.downloaded"));
   };
 
   return (
@@ -95,30 +98,30 @@ export default function MockDataGenerator() {
       <div className="grid gap-6 lg:grid-cols-5">
         {/* Schema builder */}
         <section className="card flex flex-col p-6 lg:col-span-2">
-          <h2 className="section-title mb-5">Schema</h2>
+          <h2 className="section-title mb-5">{t("tools.mock.schema")}</h2>
 
           <div className="space-y-3">
             {fields.map((f) => (
               <div key={f.id} className="flex items-center gap-2">
                 <input
-                  aria-label="Nome da chave"
+                  aria-label={t("tools.mock.keyName")}
                   value={f.key}
                   onChange={(e) => updateField(f.id, { key: e.target.value })}
-                  placeholder="nome_da_chave"
+                  placeholder={t("tools.mock.keyPh")}
                   className="input min-w-0 flex-1 font-mono"
                 />
                 <select
-                  aria-label="Tipo de dado"
+                  aria-label={t("tools.mock.dataType")}
                   value={f.type}
                   onChange={(e) => updateField(f.id, { type: e.target.value as DataTypeId })}
                   className="input min-w-0 flex-1"
                 >
-                  {DATA_TYPES.map((t) => (
-                    <option key={t.id} value={t.id}>{t.label}</option>
+                  {DATA_TYPES.map((dt) => (
+                    <option key={dt.id} value={dt.id}>{t(`tools.mock.types.${dt.id}`)}</option>
                   ))}
                 </select>
                 <button
-                  aria-label="Remover campo"
+                  aria-label={t("tools.mock.removeField")}
                   onClick={() => setFields((fs) => fs.filter((x) => x.id !== f.id))}
                   className="shrink-0 rounded-md p-2 text-stone-400 hover:bg-stone-100 hover:text-red-700"
                 >
@@ -131,10 +134,10 @@ export default function MockDataGenerator() {
           </div>
 
           <button onClick={addField} className="mt-4 self-start text-sm font-medium text-teal-700 hover:underline">
-            + Adicionar campo
+            {t("tools.mock.addField")}
           </button>
 
-          <label htmlFor="count" className="label mt-6">Número de registros</label>
+          <label htmlFor="count" className="label mt-6">{t("tools.mock.records")}</label>
           <input
             id="count"
             type="number"
@@ -146,20 +149,20 @@ export default function MockDataGenerator() {
           />
 
           <button onClick={generate} className="btn-primary mt-6 w-full py-3">
-            Gerar JSON
+            {t("tools.mock.generate")}
           </button>
         </section>
 
         {/* Code preview */}
         <section className="card flex min-h-96 flex-col overflow-hidden lg:col-span-3">
           <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3">
-            <h2 className="section-title">Resultado em JSON</h2>
+            <h2 className="section-title">{t("tools.mock.result")}</h2>
             <div className="flex items-center gap-2">
-              <button onClick={copy} aria-label="Copiar para a área de transferência" className="btn-secondary !px-3 !py-1.5 text-xs">
-                {copied ? "Copiado!" : "Copiar"}
+              <button onClick={copy} aria-label={t("tools.mock.copyAria")} className="btn-secondary !px-3 !py-1.5 text-xs">
+                {copied ? t("tools.mock.copied") : t("tools.mock.copy")}
               </button>
               <button onClick={download} className="btn-secondary !px-3 !py-1.5 text-xs">
-                Baixar .json
+                {t("tools.mock.download")}
               </button>
             </div>
           </div>
@@ -169,7 +172,7 @@ export default function MockDataGenerator() {
         </section>
       </div>
 
-      <UsageBadge>Uso gratuito: {used}/{FREE_GENERATIONS} gerações</UsageBadge>
+      <UsageBadge>{t("tools.mock.usage", { used, limit: FREE_GENERATIONS })}</UsageBadge>
     </>
   );
 }

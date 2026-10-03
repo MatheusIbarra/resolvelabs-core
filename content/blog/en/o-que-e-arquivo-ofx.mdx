@@ -1,0 +1,59 @@
+---
+title: "What is an OFX file and how to open it without installing software"
+description: "Understand what the OFX format of bank statements is, what's inside it and how to open and check an OFX file right in your browser, without installing anything."
+date: "2026-10-02"
+author: "ResolveLabs Team"
+---
+
+If you've ever downloaded a statement from your bank and got a file ending in `.ofx`, you probably double-clicked it and nothing useful happened. That's normal: OFX wasn't made to be read by a person, but by a system.
+
+## What OFX is
+
+OFX (Open Financial Exchange) is a financial data exchange format. Banks use it to export statements in a structured way, and accounting systems, ERPs and bank reconciliation programs use it to import those entries without typing.
+
+In practice, the file is text with fields marked by tags. For each entry, it stores information such as:
+
+- **Type** of entry (`TRNTYPE`), for example debit or credit.
+- **Date** it was posted (`DTPOSTED`).
+- **Amount** (`TRNAMT`), with a negative sign for outflows.
+- **Unique identifier** of the transaction (`FITID`), which helps the system avoid importing the same entry twice.
+- **Description** (`MEMO` or `NAME`).
+
+There's also the account balance (`BALAMT`) and the period covered by the statement.
+
+## Why OFX is different from a PDF
+
+The PDF statement is only visual: it's for a person to read. An accounting system can't reliably identify what is the date, amount and description in it. OFX delivers those fields separately, which is why it's the standard format for importing statements.
+
+## How to open an OFX file
+
+There are three ways:
+
+1. **Import it into the accounting or financial system.** This is the intended use, but it doesn't help if you only want to check the content.
+2. **Open it in a text editor.** It works, because OFX is text, but you see a block of tags that is hard to read, especially in long statements.
+3. **Open it in a browser viewer.** It shows the account, period, balance and entries in a table, with no software to install.
+
+<ToolCta slug="visualizador-ofx">Choose the OFX file and see the statement as a table. Reading happens in your browser: the file never goes through our servers.</ToolCta>
+
+## When it's worth checking the OFX before importing
+
+Opening the file before importing avoids rework. Check mainly:
+
+- whether the **period** is what you expected;
+- whether the **final balance** matches the bank's;
+- whether the number of **entries** makes sense;
+- whether the **descriptions** are not empty.
+
+## What if I only have the PDF statement?
+
+Some banks only offer the statement as PDF for certain periods or account types. In those cases, you can convert the PDF to OFX. See the PDF to OFX converter guide for the step by step.
+
+<ToolCta slug="conversor-pdf-para-ofx">Convert the PDF statement to OFX in your browser. A free account is required, and some conversions are included at no cost.</ToolCta>
+
+## Quick questions
+
+**Are OFX and CSV the same thing?** No. CSV is a plain table and each bank builds the columns its own way. OFX follows a standard with defined fields, which makes automatic import easier.
+
+**Does the viewer change my file?** No. It only reads and displays the content.
+
+**Can I open it on my phone?** Yes, in the browser.

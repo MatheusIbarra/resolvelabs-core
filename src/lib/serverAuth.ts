@@ -1,3 +1,4 @@
+import { apiError } from "./apiError";
 import { NextResponse, type NextRequest } from "next/server";
 import type { HydratedDocument } from "mongoose";
 import { connectDB } from "./mongodb";
@@ -51,8 +52,8 @@ export function publicUser(user: UserDoc) {
   };
 }
 
-export function unauthenticated() {
-  return NextResponse.json({ error: "Sessão inválida ou expirada.", code: "UNAUTHENTICATED" }, { status: 401 });
+export function unauthenticated(request: Request) {
+  return apiError(request, "sessionInvalid", 401, undefined, { code: "UNAUTHENTICATED" });
 }
 
 type AdminGuard = { admin: UserDoc; response?: never } | { admin?: never; response: NextResponse };
@@ -60,9 +61,9 @@ type AdminGuard = { admin: UserDoc; response?: never } | { admin?: never; respon
 /** RBAC no servidor: confere o role atual no banco, sem confiar apenas no token/middleware. */
 export async function requireAdmin(request: NextRequest): Promise<AdminGuard> {
   const user = await getCurrentUser(request);
-  if (!user) return { response: unauthenticated() };
+  if (!user) return { response: unauthenticated(request) };
   if (user.role !== "admin") {
-    return { response: NextResponse.json({ error: "Acesso restrito a administradores." }, { status: 403 }) };
+    return { response: apiError(request, "adminOnly", 403) };
   }
   return { admin: user };
 }

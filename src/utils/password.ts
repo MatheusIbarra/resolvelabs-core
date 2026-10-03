@@ -64,13 +64,13 @@ export function generatePassword(o: PasswordOptions): string {
   return chars.join("");
 }
 
-export type Strength = { label: "Fraca" | "Razoável" | "Forte" | "Muito forte"; bits: number; level: 1 | 2 | 3 | 4 };
+export type Strength = { bits: number; level: 1 | 2 | 3 | 4 };
 
 /** Estimativa: comprimento x log2(alfabeto). Não considera padrões; é um teto para senhas realmente aleatórias. */
 export function estimateStrength(o: PasswordOptions): Strength {
   const bits = Math.round(o.length * Math.log2(Math.max(2, poolSize(o))));
-  if (bits < 40) return { label: "Fraca", bits, level: 1 };
-  if (bits < 60) return { label: "Razoável", bits, level: 2 };
-  if (bits < 80) return { label: "Forte", bits, level: 3 };
-  return { label: "Muito forte", bits, level: 4 };
+  if (bits < 40) return { bits, level: 1 };
+  if (bits < 60) return { bits, level: 2 };
+  if (bits < 80) return { bits, level: 3 };
+  return { bits, level: 4 };
 }

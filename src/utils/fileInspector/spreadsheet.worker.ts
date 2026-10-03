@@ -20,7 +20,7 @@ ctx.onmessage = (event: MessageEvent) => {
     } else if (handle) {
       ctx.postMessage({ id: msg.id, ok: true, rows: handle.getRows(msg.sheet, msg.offset, msg.limit) });
     } else {
-      throw new Error("Planilha não carregada.");
+      throw new Error("Spreadsheet not loaded.");
     }
   } catch (err) {
     ctx.postMessage({ id: msg.id, ok: false, error: err instanceof Error ? err.message : String(err) });

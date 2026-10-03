@@ -1,3 +1,4 @@
+import { apiError } from "@/lib/apiError";
 import { NextResponse, type NextRequest } from "next/server";
 import { isValidObjectId } from "mongoose";
 import { User } from "@/models/User";
@@ -15,25 +16,25 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (guard.response) return guard.response;
 
   const { id } = await params;
-  if (!isValidObjectId(id)) return NextResponse.json({ error: "ID inválido." }, { status: 400 });
+  if (!isValidObjectId(id)) return apiError(request, "invalidId", 400);
 
   let body: { days?: unknown };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Corpo da requisição inválido." }, { status: 400 });
+    return apiError(request, "invalidBody", 400);
   }
 
   const days = body.days;
   const permanent = days === null;
   if (!permanent && !(typeof days === "number" && Number.isInteger(days) && days >= 1 && days <= MAX_DAYS)) {
-    return NextResponse.json({ error: `Informe days entre 1 e ${MAX_DAYS}, ou null para permanente.` }, { status: 400 });
+    return apiError(request, "grantDays", 400, { max: MAX_DAYS });
   }
 
   try {
     const user = await User.findById(id);
-    if (!user) return NextResponse.json({ error: "Usuário não encontrado." }, { status: 404 });
-    if (user.role === "admin") return NextResponse.json({ error: "Contas admin já têm acesso total." }, { status: 400 });
+    if (!user) return apiError(request, "userNotFound", 404);
+    if (user.role === "admin") return apiError(request, "adminFullAccess", 400);
 
     user.role = "pro";
     if (permanent) {
@@ -49,6 +50,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ ok: true, role: user.role, planExpiresAt: user.planExpiresAt ?? null });
   } catch (err) {
     console.error("[admin/grant-pro]", err);
-    return NextResponse.json({ error: "Erro interno. Tente novamente." }, { status: 500 });
+    return apiError(request, "internal", 500);
   }
 }

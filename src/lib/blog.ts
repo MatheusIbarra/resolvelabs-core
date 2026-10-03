@@ -1,9 +1,11 @@
 /// <reference types="vite/client" />
-// Motor do blog: posts em content/blog/*.mdx com frontmatter (gray-matter).
+// Motor do blog: posts em content/blog/<idioma>/<slug>.mdx com frontmatter (gray-matter).
+// O mesmo nome de arquivo nos três idiomas liga as traduções (hreflang).
 // Os arquivos são EMBUTIDOS no build (import.meta.glob) em vez de lidos com `fs` em runtime:
 // em deploys serverless (Nitro/Vercel) a pasta content/ não acompanha a função do servidor.
 import matter from "gray-matter";
-import { resolveToolLink, validToolSlugs } from "./tool-links";
+import { isValidToolSlug, validToolSlugs } from "./tool-links";
+import { INTL_LOCALE, LOCALES, type Locale } from "@/i18n/config";
 
 export interface PostMeta {
   slug: string;
@@ -21,7 +23,7 @@ export interface Post extends PostMeta {
   content: string;
 }
 
-const FILES = import.meta.glob("/content/blog/*.mdx", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
+const FILES = import.meta.glob("/content/blog/*/*.mdx", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -38,11 +40,14 @@ function requiredString(data: Record<string, unknown>, field: string, file: stri
   return v.trim();
 }
 
-function parse(path: string, raw: string): (Post & { draft: boolean }) | null {
-  const file = path.split("/").pop()!;
+function parse(path: string, raw: string): (Post & { draft: boolean; locale: Locale }) | null {
+  const [, , , lang, file] = path.split("/");
+  const locale = LOCALES.find((l) => l === lang);
+  if (!locale) throw new Error(`[blog] ${path}: pasta de idioma inválida (use ${LOCALES.join(", ")}).`);
   const slug = file.replace(/\.mdx$/, "");
   const { data, content } = matter(raw);
-  const post: Post & { draft: boolean } = {
+  const post: Post & { draft: boolean; locale: Locale } = {
+    locale,
     slug,
     title: requiredString(data, "title", file),
     description: requiredString(data, "description", file),
@@ -55,26 +60,31 @@ function parse(path: string, raw: string): (Post & { draft: boolean }) | null {
   };
   // Falha cedo (sitemap, listagem e artigo) se algum <ToolCta slug="..."> apontar para página que não é pública.
   for (const m of content.matchAll(/<ToolCta\s+slug="([^"]+)"/g)) {
-    if (!resolveToolLink(m[1])) throw new Error(`[blog] ${file}: <ToolCta slug="${m[1]}"> inválido. Válidos: ${validToolSlugs().join(", ")}`);
+    if (!isValidToolSlug(m[1])) throw new Error(`[blog] ${file}: <ToolCta slug="${m[1]}"> inválido. Válidos: ${validToolSlugs().join(", ")}`);
   }
   return post;
 }
 
-const POSTS: Post[] = Object.entries(FILES)
+const POSTS: (Post & { locale: Locale })[] = Object.entries(FILES)
   .map(([path, raw]) => parse(path, raw)!)
   .filter((p) => !p.draft)
   .sort((a, b) => (a.date === b.date ? a.title.localeCompare(b.title) : a.date < b.date ? 1 : -1));
 
-/** Posts publicados (sem rascunhos), do mais recente para o mais antigo. */
-export function getAllPosts(): PostMeta[] {
-  return POSTS.map(({ content: _content, ...meta }) => meta);
+/** Posts publicados no idioma (sem rascunhos), do mais recente para o mais antigo. */
+export function getAllPosts(locale: Locale): PostMeta[] {
+  return POSTS.filter((p) => p.locale === locale).map(({ content: _content, locale: _l, ...meta }) => meta);
 }
 
-export function getPostBySlug(slug: string): Post | undefined {
-  return POSTS.find((p) => p.slug === slug);
+export function getPostBySlug(locale: Locale, slug: string): Post | undefined {
+  return POSTS.find((p) => p.locale === locale && p.slug === slug);
+}
+
+/** Idiomas em que o artigo existe (para o hreflang: só entram traduções reais). */
+export function postLocales(slug: string): Locale[] {
+  return LOCALES.filter((l) => POSTS.some((p) => p.locale === l && p.slug === slug));
 }
 
 /** "2 de outubro de 2026" (fixo em UTC: a data do post não muda com o fuso do leitor). */
-export function formatPostDate(day: string): string {
-  return new Date(`${day}T00:00:00Z`).toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+export function formatPostDate(day: string, locale: Locale): string {
+  return new Date(`${day}T00:00:00Z`).toLocaleDateString(INTL_LOCALE[locale], { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 }

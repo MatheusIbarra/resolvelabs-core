@@ -1,3 +1,4 @@
+import { apiError } from "@/lib/apiError";
 import { NextResponse, type NextRequest } from "next/server";
 import { User } from "@/models/User";
 import { getCurrentUser, unauthenticated } from "@/lib/serverAuth";
@@ -12,7 +13,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
-    if (!user) return unauthenticated();
+    if (!user) return unauthenticated(request);
 
     const code = await ensureAffiliateCode(user);
     const [referredCount, convertedCount] = await Promise.all([
@@ -33,6 +34,6 @@ export async function GET(request: NextRequest) {
     );
   } catch (err) {
     console.error("[user/affiliate]", err);
-    return NextResponse.json({ error: "Erro interno. Tente novamente." }, { status: 500 });
+    return apiError(request, "internal", 500);
   }
 }

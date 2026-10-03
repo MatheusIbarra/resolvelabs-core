@@ -15,7 +15,8 @@
     "stripe:cancel": "node scripts/stripe-test.mjs cancel",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "check:design": "node scripts/check-design.mjs"
+    "check:design": "node scripts/check-design.mjs",
+    "check:i18n": "node scripts/check-i18n.mjs"
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.20",

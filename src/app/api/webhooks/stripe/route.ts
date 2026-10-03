@@ -134,11 +134,11 @@ export async function POST(request: NextRequest) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret) {
     console.error("[stripe webhook] STRIPE_WEBHOOK_SECRET ausente");
-    return NextResponse.json({ error: "Webhook não configurado." }, { status: 500 });
+    return NextResponse.json({ error: "Webhook not configured." }, { status: 500 });
   }
 
   const signature = request.headers.get("stripe-signature");
-  if (!signature) return NextResponse.json({ error: "Assinatura ausente." }, { status: 400 });
+  if (!signature) return NextResponse.json({ error: "Missing signature." }, { status: 400 });
 
   // O corpo precisa ser o texto cru: qualquer re-serialização invalida a assinatura.
   const payload = await request.text();
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
     event = getStripe().webhooks.constructEvent(payload, signature, secret);
   } catch (err) {
     console.warn("[stripe webhook] assinatura inválida", err instanceof Error ? err.message : err);
-    return NextResponse.json({ error: "Assinatura inválida." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid signature." }, { status: 400 });
   }
 
   try {
@@ -173,6 +173,6 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     // 500 faz o Stripe reenviar o evento (os handlers são idempotentes).
     console.error("[stripe webhook] falha ao processar", event.type, err);
-    return NextResponse.json({ error: "Falha ao processar o evento." }, { status: 500 });
+    return NextResponse.json({ error: "Failed to process the event." }, { status: 500 });
   }
 }

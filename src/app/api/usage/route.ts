@@ -1,3 +1,4 @@
+import { apiError } from "@/lib/apiError";
 import { NextResponse, type NextRequest } from "next/server";
 import { User } from "@/models/User";
 import { getCurrentUser, unauthenticated } from "@/lib/serverAuth";
@@ -17,17 +18,17 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Corpo da requisição inválido." }, { status: 400 });
+    return apiError(request, "invalidBody", 400);
   }
 
   const tool = typeof body.tool === "string" ? getTool(body.tool) : undefined;
   if (!tool || tool.freeLimit === undefined) {
-    return NextResponse.json({ error: "Ferramenta inválida." }, { status: 400 });
+    return apiError(request, "invalidTool", 400);
   }
 
   try {
     const user = await getCurrentUser(request);
-    if (!user) return unauthenticated();
+    if (!user) return unauthenticated(request);
 
     const who = { id: user.id, email: user.email, role: user.role };
 
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     if (body.refund === true) {
       // Estorno limitado: evita usar o endpoint para zerar a cota repetidamente.
-      const limited = rateLimit(`usage-refund:${user.id}`, 5, 10 * 60_000);
+      const limited = rateLimit(`usage-refund:${user.id}`, 5, 10 * 60_000, request);
       if (limited) return limited;
       const refunded = await User.findOneAndUpdate(
         { _id: user._id, usageCount: { $gt: 0 } },
@@ -56,12 +57,12 @@ export async function POST(request: NextRequest) {
     );
     if (!updated) {
       await logActivity(request, { event: "usage_blocked", user: who, tool: tool.slug });
-      return NextResponse.json({ error: "Limite gratuito atingido.", code: "LIMIT_REACHED" }, { status: 403 });
+      return apiError(request, "limitReached", 403, undefined, { code: "LIMIT_REACHED" });
     }
     await logActivity(request, { event: "usage", user: who, tool: tool.slug });
     return NextResponse.json({ usageCount: updated.usageCount });
   } catch (err) {
     console.error("[usage]", err);
-    return NextResponse.json({ error: "Erro interno. Tente novamente." }, { status: 500 });
+    return apiError(request, "internal", 500);
   }
 }

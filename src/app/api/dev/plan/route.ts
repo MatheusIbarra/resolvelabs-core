@@ -1,3 +1,4 @@
+import { apiError } from "@/lib/apiError";
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser, issueSession, publicUser, unauthenticated } from "@/lib/serverAuth";
 
@@ -17,21 +18,21 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Corpo da requisição inválido." }, { status: 400 });
+    return apiError(request, "invalidBody", 400);
   }
 
   try {
     const user = await getCurrentUser(request);
-    if (!user) return unauthenticated();
+    if (!user) return unauthenticated(request);
     if (user.role === "admin") {
-      return NextResponse.json({ error: "Contas admin não alteram plano." }, { status: 403 });
+      return apiError(request, "adminNoPlan", 403);
     }
 
     if (body.plan === "FREE" || body.plan === "PRO") {
       user.role = body.plan === "PRO" ? "pro" : "free";
       user.planExpiresAt = undefined;
     }
-    else if (body.plan !== undefined) return NextResponse.json({ error: "Plano inválido." }, { status: 400 });
+    else if (body.plan !== undefined) return apiError(request, "invalidPlan", 400);
     if (body.resetUsage === true) user.usageCount = 0;
     await user.save();
 
@@ -41,6 +42,6 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (err) {
     console.error("[dev/plan]", err);
-    return NextResponse.json({ error: "Erro interno. Tente novamente." }, { status: 500 });
+    return apiError(request, "internal", 500);
   }
 }

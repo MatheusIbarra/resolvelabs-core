@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ACCEPT, SUPPORTED_LABEL, detectKind } from "@/utils/fileInspector/detect";
+import { ACCEPT, detectKind } from "@/utils/fileInspector/detect";
 import { formatBytes, formatNumber } from "@/utils/fileInspector/format";
 import { decodeOfxBytes, parseOfx } from "@/utils/fileInspector/ofx";
 import { createSpreadsheetEngine, type SpreadsheetEngine } from "@/utils/fileInspector/spreadsheet";
@@ -10,6 +10,7 @@ import { formatXml, jsonNode, parseJson, parseXml, xmlNode, type TreeNode } from
 import { PdfPasswordError, inspectImage, inspectPdf, type ImageInfo, type PdfInfo } from "@/utils/fileInspector/media";
 import type { FileKind, OfxData } from "@/utils/fileInspector/types";
 import { trackEvent } from "@/lib/track";
+import { useI18n, type ClientTranslator } from "@/i18n/I18nProvider";
 import { Loading } from "../ui/Loading";
 import Alert from "../ui/Alert";
 import { useToast } from "../ui/Toast";
@@ -22,10 +23,6 @@ import { BAR, BTN, DIM } from "./ui";
 
 const MAX_FILE_BYTES = 200 * 1024 * 1024;
 const MAX_TEXT_BYTES = 60 * 1024 * 1024; // JSON/XML/OFX são carregados inteiros na memória
-
-const KIND_LABEL: Record<FileKind, string> = {
-  spreadsheet: "Planilha", ofx: "OFX", xml: "XML", json: "JSON", pdf: "PDF", image: "Imagem",
-};
 
 type Loaded =
   | { kind: "spreadsheet"; engine: SpreadsheetEngine }
@@ -49,13 +46,13 @@ function disposeResult(result: Result | null) {
   else if (loaded.kind === "image") URL.revokeObjectURL(loaded.info.previewUrl);
 }
 
-async function inspect(file: File, kind: FileKind): Promise<Loaded> {
+async function inspect(file: File, kind: FileKind, tr: ClientTranslator): Promise<Loaded> {
   if (kind === "spreadsheet") return { kind, engine: await createSpreadsheetEngine(file) };
   if (kind === "pdf") return { kind, info: await inspectPdf(file) };
   if (kind === "image") return { kind, info: await inspectImage(file) };
 
   if (file.size > MAX_TEXT_BYTES) {
-    throw new Error(`Arquivo ${KIND_LABEL[kind]} muito grande para pré-visualizar (${formatBytes(file.size)}; limite ${formatBytes(MAX_TEXT_BYTES)}).`);
+    throw new Error(tr.t("tools.inspector.textTooBig", { kind: tr.t(`tools.inspector.kind.${kind}`), size: formatBytes(file.size), limit: formatBytes(MAX_TEXT_BYTES) }));
   }
   const buffer = await file.arrayBuffer();
   if (kind === "ofx") return { kind, data: parseOfx(decodeOfxBytes(buffer)) };
@@ -69,6 +66,8 @@ async function inspect(file: File, kind: FileKind): Promise<Loaded> {
 
 export default function FileInspector({ toolSlug }: { toolSlug?: string } = {}) {
   const toast = useToast();
+  const tr = useI18n();
+  const { t } = tr;
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isReading, setIsReading] = useState(false);
@@ -85,10 +84,10 @@ export default function FileInspector({ toolSlug }: { toolSlug?: string } = {}) 
         await navigator.clipboard.writeText(text);
         toast.success(label);
       } catch {
-        toast.error("Não foi possível copiar para a área de transferência.");
+        toast.error(t("tools.inspector.copyFailed"));
       }
     },
-    [toast],
+    [toast, t],
   );
 
   const open = useCallback(async (file: File | undefined) => {
@@ -98,10 +97,10 @@ export default function FileInspector({ toolSlug }: { toolSlug?: string } = {}) 
     setError(null);
     const started = performance.now();
     try {
-      if (file.size > MAX_FILE_BYTES) throw new Error(`Arquivo grande demais (${formatBytes(file.size)}). O limite é ${formatBytes(MAX_FILE_BYTES)}.`);
+      if (file.size > MAX_FILE_BYTES) throw new Error(t("tools.inspector.tooBig", { size: formatBytes(file.size), limit: formatBytes(MAX_FILE_BYTES) }));
       const kind = await detectKind(file);
-      if (!kind) throw new Error(`Tipo de arquivo não suportado: "${file.name}". Aceitamos ${SUPPORTED_LABEL}.`);
-      const loaded = await inspect(file, kind);
+      if (!kind) throw new Error(t("tools.inspector.unsupported", { name: file.name, supported: t("tools.inspector.supported") }));
+      const loaded = await inspect(file, kind, tr);
       if (id !== runId.current) {
         disposeResult({ file, readMs: 0, loaded });
         return;
@@ -113,13 +112,13 @@ export default function FileInspector({ toolSlug }: { toolSlug?: string } = {}) 
       if (toolSlug) trackEvent(toolSlug, "use", loaded.kind); // só o tipo, nunca nome ou conteúdo
     } catch (err) {
       if (id !== runId.current) return;
-      const message = err instanceof PdfPasswordError ? err.message : err instanceof Error ? err.message : "Não foi possível ler o arquivo.";
+      const message = err instanceof PdfPasswordError ? err.message : err instanceof Error ? err.message : t("tools.inspector.readFailed");
       setError(message);
       toast.error(message);
     } finally {
       if (id === runId.current) setIsReading(false);
     }
-  }, [toast, toolSlug]);
+  }, [toast, toolSlug, t, tr]);
 
   const clear = () => {
     runId.current++;
@@ -165,25 +164,25 @@ export default function FileInspector({ toolSlug }: { toolSlug?: string } = {}) 
         {result ? (
           <>
             <span className="min-w-0 truncate font-medium text-stone-900" title={result.file.name} data-testid="file-name">{result.file.name}</span>
-            <span className="badge-brand" data-testid="file-kind">{KIND_LABEL[result.loaded.kind]}</span>
+            <span className="badge-brand" data-testid="file-kind">{t(`tools.inspector.kind.${result.loaded.kind}`)}</span>
             <span className={DIM}>{sizeLabel}</span>
-            <span className={`${DIM} text-xs`}>lido em {formatNumber(result.readMs)} ms</span>
-            <span className={`${DIM} hidden text-xs sm:inline`}>modificado em {new Date(result.file.lastModified).toLocaleString("pt-BR")}</span>
+            <span className={`${DIM} text-xs`}>{t("tools.inspector.readIn", { ms: formatNumber(result.readMs) })}</span>
+            <span className={`${DIM} hidden text-xs sm:inline`}>{t("tools.inspector.modifiedOn", { date: tr.dateTime(result.file.lastModified, { dateStyle: "short", timeStyle: "medium" }) })}</span>
           </>
         ) : (
-          <span className="font-medium text-stone-700">Inspetor de arquivos</span>
+          <span className="font-medium text-stone-700">{t("tools.inspector.title")}</span>
         )}
         <span className="ml-auto flex gap-2">
-          {result && <button className={BTN} onClick={clear}>Limpar</button>}
+          {result && <button className={BTN} onClick={clear}>{t("tools.inspector.clear")}</button>}
           <button className={result ? BTN : "btn-primary !px-3 !py-1.5"} onClick={() => inputRef.current?.click()} disabled={isReading}>
-            {result ? "Trocar arquivo" : "Escolher arquivo"}
+            {result ? t("tools.inspector.swap") : t("tools.inspector.choose")}
           </button>
         </span>
       </div>
 
       {isReading && (
         <div className="border-b border-stone-200 px-4 py-3">
-          <Loading>Lendo o arquivo…</Loading>
+          <Loading>{t("tools.inspector.reading")}</Loading>
         </div>
       )}
 
@@ -212,10 +211,10 @@ export default function FileInspector({ toolSlug }: { toolSlug?: string } = {}) 
             <svg className="mb-4 h-10 w-10 text-stone-400 group-hover:text-teal-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
-            <p className="mb-1 text-lg font-semibold text-stone-900">{isDragging ? "Solte o arquivo para inspecionar" : "Arraste um arquivo aqui"}</p>
-            <p className="mb-5 text-sm text-stone-600">ou clique para escolher no computador</p>
-            <p className="mb-2 text-xs text-stone-500">{SUPPORTED_LABEL}</p>
-            <p className="text-xs font-medium text-teal-800">100% local: o arquivo nunca sai do seu navegador.</p>
+            <p className="mb-1 text-lg font-semibold text-stone-900">{isDragging ? t("tools.inspector.dropActive") : t("tools.inspector.drag")}</p>
+            <p className="mb-5 text-sm text-stone-600">{t("tools.inspector.orClick")}</p>
+            <p className="mb-2 text-xs text-stone-500">{t("tools.inspector.supported")}</p>
+            <p className="text-xs font-medium text-teal-800">{t("tools.inspector.local")}</p>
           </div>
         </div>
       ) : (

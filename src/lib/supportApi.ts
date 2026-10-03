@@ -1,4 +1,5 @@
 // Cliente da API de suporte (/api/support/*). Autorização é sempre aplicada no servidor.
+import { activeTranslator, apiFetch } from "@/i18n/active";
 
 export type TicketStatus = "open" | "answered" | "closed";
 
@@ -28,16 +29,16 @@ export interface Ticket extends TicketSummary {
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(url, {
+    res = await apiFetch(url, {
       cache: "no-store",
       ...init,
       headers: init?.body ? { "Content-Type": "application/json", ...init.headers } : init?.headers,
     });
   } catch {
-    throw new Error("Não foi possível conectar ao servidor.");
+    throw new Error(activeTranslator().t("msg.api.network"));
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.error ?? "Falha na requisição.");
+  if (!res.ok) throw new Error(data?.error ?? activeTranslator().t("msg.api.requestFailed"));
   return data as T;
 }
 
@@ -53,4 +54,3 @@ export const supportApi = {
   close: (id: string) => request<{ ticket: Ticket }>(`/api/support/tickets/${id}`, json("PATCH", { status: "closed" })),
 };
 
-export const STATUS_LABEL: Record<TicketStatus, string> = { open: "Aberto", answered: "Respondido", closed: "Fechado" };

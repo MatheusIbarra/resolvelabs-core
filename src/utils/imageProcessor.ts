@@ -1,3 +1,4 @@
+import { activeTranslator } from "@/i18n/active";
 /**
  * Processamento de imagens em lote 100% no navegador (Canvas): redimensiona, converte para WebP/JPEG,
  * aplica marca d'água (texto e/ou logo) e compacta tudo em um .zip. Nenhuma imagem sai da máquina do usuário.
@@ -110,7 +111,7 @@ function drawWatermark(ctx: CanvasRenderingContext2D, width: number, height: num
 
 function canvasToBlob(canvas: HTMLCanvasElement, mimeType: string, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Não foi possível gerar a imagem."))), mimeType, quality),
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error(activeTranslator().t("tools.images.canvasBlob")))), mimeType, quality),
   );
 }
 
@@ -127,7 +128,7 @@ export async function processImage(file: File, options: ImageProcessOptions = DE
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Seu navegador não suporta Canvas 2D.");
+    if (!ctx) throw new Error(activeTranslator().t("tools.images.canvasUnsupported"));
 
     if (options.mimeType === "image/jpeg") {
       ctx.fillStyle = "#ffffff"; // JPEG não tem transparência

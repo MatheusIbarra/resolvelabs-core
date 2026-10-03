@@ -1,10 +1,9 @@
+"use client";
+
 import PageHeading from "./PageHeading";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export default function ConverterHero() {
-  return (
-    <PageHeading
-      title="Conversor de Extrato PDF para OFX"
-      description="Automatize a conciliação bancária do seu sistema contábil. Processamento 100% seguro no seu navegador, sem envio de dados para servidores."
-    />
-  );
+  const { t } = useI18n();
+  return <PageHeading title={t("toolPages.pdfToOfx.title")} description={t("toolPages.pdfToOfx.description")} />;
 }

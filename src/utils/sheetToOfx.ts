@@ -1,3 +1,5 @@
+import { activeLocale, activeTranslator } from "@/i18n/active";
+import { INTL_LOCALE } from "@/i18n/config";
 /**
  * Planilha (CSV/XLSX) -> lançamentos para OFX, 100% no navegador.
  * A leitura usa o SheetJS (já presente no projeto, lê CSV e Excel); a geração do OFX reaproveita o `buildOfx` do conversor de PDF.
@@ -36,7 +38,7 @@ export interface Workbook {
 
 /** Lê todas as abas. O SheetJS só é carregado quando o usuário escolhe um arquivo. */
 export async function readSheets(file: File): Promise<Workbook> {
-  if (file.size > MAX_FILE_BYTES) throw new SheetReadError(`Arquivo grande demais. O limite é ${MAX_FILE_BYTES / 1024 / 1024} MB.`);
+  if (file.size > MAX_FILE_BYTES) throw new SheetReadError(activeTranslator().t("tools.sheet.tooBig", { mb: MAX_FILE_BYTES / 1024 / 1024 }));
   const XLSX = await import("xlsx");
   const buffer = await file.arrayBuffer();
   let workbook;
@@ -49,7 +51,7 @@ export async function readSheets(file: File): Promise<Workbook> {
       workbook = XLSX.read(buffer, { type: "array" });
     }
   } catch {
-    throw new SheetReadError("Não foi possível ler este arquivo. Confira se é uma planilha CSV ou Excel válida.");
+    throw new SheetReadError(activeTranslator().t("tools.sheet.unreadable"));
   }
 
   const sheets: SheetData[] = [];
@@ -58,12 +60,12 @@ export async function readSheets(file: File): Promise<Workbook> {
     if (!ws?.["!ref"]) continue;
     const rows = XLSX.utils.sheet_to_json<Cell[]>(ws, { header: 1, raw: true, defval: "", blankrows: true });
     if (rows.every((r) => r.every((c) => String(c ?? "").trim() === ""))) continue;
-    if (rows.length > MAX_ROWS + 1) throw new SheetReadError(`A planilha "${name}" tem mais de ${MAX_ROWS.toLocaleString("pt-BR")} linhas. Divida o arquivo.`);
+    if (rows.length > MAX_ROWS + 1) throw new SheetReadError(activeTranslator().t("tools.sheet.tooManyRows", { name, max: MAX_ROWS.toLocaleString(INTL_LOCALE[activeLocale()]) }));
     const width = Math.max(...rows.map((r) => r.length));
     const firstRow = XLSX.utils.decode_range(ws["!ref"]).s.r + 1;
     sheets.push({ name, firstRow, rows: rows.map((r) => Array.from({ length: width }, (_, c) => r[c] ?? "")) });
   }
-  if (sheets.length === 0) throw new SheetReadError("A planilha está vazia.");
+  if (sheets.length === 0) throw new SheetReadError(activeTranslator().t("tools.sheet.empty"));
   const serialToParts = (serial: number) => {
     const p = XLSX.SSF.parse_date_code(serial);
     return p ? { y: p.y, m: p.m, d: p.d } : null;
@@ -122,7 +124,7 @@ export function columnLabels(sheet: SheetData, headerRow: number): string[] {
   const names = headerNames(sheet, headerRow);
   return names.map((name, i) => {
     const ex = exampleOf(sheet, headerRow, i);
-    return `${columnLabel(i)} · ${name || "sem título"}${ex ? ` (ex.: ${ex})` : ""}`;
+    return `${columnLabel(i)} · ${name || activeTranslator().t("tools.sheet.untitled")}${ex ? ` (${activeTranslator().t("tools.sheet.example", { value: ex })})` : ""}`;
   });
 }
 
@@ -378,7 +380,8 @@ export interface BuildOptions {
 export interface SkippedRow {
   /** Número da linha na planilha (começa em 1). */
   row: number;
-  reason: string;
+  /** Código do motivo (traduzido na tela, em `tools.sheet.reason*`). */
+  reason: "invalid-date" | "invalid-amount" | "out-of-range";
   /** Valor da célula que não foi entendido (para o usuário reconhecer o formato). */
   sample?: string;
 }
@@ -399,7 +402,7 @@ function sampleOf(cell: Cell): string | undefined {
 /** Uma linha por lançamento; quebras de linha e caracteres de controle viram espaço (o OFX 1.02 é orientado a linhas). */
 export function cleanDescription(raw: Cell): string {
   const s = text(raw).replace(/[\u0000-\u001f\u007f-\u009f]+/g, " ").replace(/\s+/g, " ").trim();
-  return s || "Sem descrição";
+  return s || activeTranslator().t("tools.sheet.noDescription");
 }
 
 const DEBIT_WORD = /^(d|deb|debito|débito|saida|saída|pagamento|pgto|compra|saque|tarifa|despesa|pago|-)(\b|$)/i;
@@ -433,7 +436,7 @@ export function buildTransactions(opts: BuildOptions): BuildResult {
     if (used.every((c) => text(row[c]) === "")) return; // linha em branco
     // Sem coluna de data, todos os lançamentos levam a data fixa escolhida pelo usuário.
     const date = mapping.date === null ? opts.fixedDate ?? null : parseDateCell(row[mapping.date], opts.serialToParts, opts.defaultYear);
-    if (!date) return void skipped.push({ row: line, reason: "data inválida", sample: sampleOf(mapping.date === null ? "" : row[mapping.date]) });
+    if (!date) return void skipped.push({ row: line, reason: "invalid-date", sample: sampleOf(mapping.date === null ? "" : row[mapping.date]) });
 
     let amount: number | null = null;
     if (amountMode === "single") {
@@ -446,9 +449,9 @@ export function buildTransactions(opts: BuildOptions): BuildResult {
     }
     if (amount === null) {
       const raw = amountMode === "single" ? (mapping.amount === null ? "" : row[mapping.amount]) : row[mapping.debit ?? mapping.credit ?? 0];
-      return void skipped.push({ row: line, reason: "valor inválido ou vazio", sample: sampleOf(raw) });
+      return void skipped.push({ row: line, reason: "invalid-amount", sample: sampleOf(raw) });
     }
-    if (Math.abs(amount) >= MAX_ABS_AMOUNT) return void skipped.push({ row: line, reason: "valor fora do limite" });
+    if (Math.abs(amount) >= MAX_ABS_AMOUNT) return void skipped.push({ row: line, reason: "out-of-range" });
     // Coluna de tipo (D/C, Entrada/Saída…): ela decide o sinal; sem tipo reconhecido, vale o sinal do próprio valor.
     if (amountMode === "single" && mapping.type !== null) {
       const kind = parseTypeCell(row[mapping.type]);

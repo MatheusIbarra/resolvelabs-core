@@ -2,14 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { adminApi, type AdminToolStatRow } from "@/lib/adminApi";
-import { ADMIN_MSG, errorMessage } from "@/lib/messages";
+import { errorMessage } from "@/lib/messages";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Loading } from "../ui/Loading";
 import Alert from "../ui/Alert";
 
 const PERIODS = [7, 30, 90];
-const KIND_LABEL: Record<string, string> = { spreadsheet: "Planilha", ofx: "OFX", xml: "XML", json: "JSON", pdf: "PDF", image: "Imagem" };
 
 export default function UsageTab() {
+  const { t, raw } = useI18n();
+  const kindLabel = raw("admin.usage.kind") as Record<string, string>;
   const [days, setDays] = useState(30);
   const [rows, setRows] = useState<AdminToolStatRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -20,9 +22,9 @@ export default function UsageTab() {
     try {
       setRows((await adminApi.toolStats(days)).rows);
     } catch (err) {
-      setError(errorMessage(err, ADMIN_MSG.loadFailed));
+      setError(errorMessage(err, t("msg.admin.loadFailed")));
     }
-  }, [days]);
+  }, [days, t]);
 
   useEffect(() => {
     load();
@@ -48,35 +50,35 @@ export default function UsageTab() {
     <section>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-xl text-sm text-stone-600">
-          Contagem agregada das páginas públicas (sem usuário, IP ou conteúdo de arquivo). “Uso” é quando a pessoa realmente abre um arquivo ou gera dados. Para ver quem acessou e de onde, use “Logs de acesso”.
+          {t("admin.usage.intro")}
         </p>
         <div className="flex gap-2">
           {PERIODS.map((p) => (
             <button key={p} className={p === days ? "btn-primary btn-sm" : "btn-secondary btn-sm"} onClick={() => setDays(p)}>
-              {p} dias
+              {t("admin.usage.period", { days: p })}
             </button>
           ))}
         </div>
       </div>
 
       {!rows ? (
-        <Loading>Carregando uso…</Loading>
+        <Loading>{t("admin.usage.loading")}</Loading>
       ) : (
         <div className="card overflow-x-auto">
           <table className="w-full min-w-[40rem] text-sm">
             <thead className="border-b border-stone-200 bg-stone-50">
               <tr>
-                <th className="table-th">Página</th>
-                <th className="table-th">Visitas</th>
-                <th className="table-th">Usos</th>
-                <th className="table-th">Taxa de uso</th>
-                <th className="table-th">Tipos de arquivo</th>
+                <th className="table-th">{t("admin.usage.page")}</th>
+                <th className="table-th">{t("admin.usage.visits")}</th>
+                <th className="table-th">{t("admin.usage.uses")}</th>
+                <th className="table-th">{t("admin.usage.rate")}</th>
+                <th className="table-th">{t("admin.usage.kinds")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
               {summary.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="table-td py-10 text-center text-stone-500">Nenhum acesso registrado neste período.</td>
+                  <td colSpan={5} className="table-td py-10 text-center text-stone-500">{t("admin.usage.empty")}</td>
                 </tr>
               )}
               {summary.map((s) => (
@@ -85,7 +87,7 @@ export default function UsageTab() {
                   <td className="table-td">{s.views}</td>
                   <td className="table-td">{s.uses}</td>
                   <td className="table-td">{s.views ? Math.round((s.uses / s.views) * 100) : 0}%</td>
-                  <td className="table-td">{s.kinds.length ? s.kinds.map((k) => `${KIND_LABEL[k.kind] ?? k.kind}: ${k.n}`).join(" · ") : "—"}</td>
+                  <td className="table-td">{s.kinds.length ? s.kinds.map((k) => `${kindLabel[k.kind] ?? k.kind}: ${k.n}`).join(" · ") : "—"}</td>
                 </tr>
               ))}
             </tbody>

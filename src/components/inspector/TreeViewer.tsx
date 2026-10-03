@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { TreeNode } from "@/utils/fileInspector/tree";
+import { useI18n } from "@/i18n/I18nProvider";
 import { BAR, BTN, DIM, TABLIST, tabClass } from "./ui";
 
 const CHUNK = 100;
@@ -19,6 +20,7 @@ interface RowProps {
 }
 
 function TreeRow({ node, depth, openDepth, onCopy }: RowProps) {
+  const { t, tn } = useI18n();
   const [open, setOpen] = useState(depth < openDepth);
   const [shown, setShown] = useState(CHUNK);
   const expandable = node.childCount > 0 && (node.type === "object" || node.type === "array" || node.type === "element");
@@ -28,7 +30,7 @@ function TreeRow({ node, depth, openDepth, onCopy }: RowProps) {
     <div role="treeitem" aria-expanded={expandable ? open : undefined}>
       <div className="group flex items-baseline gap-2 py-[3px] hover:bg-stone-50" style={{ paddingLeft: depth * 18 + 12 }}>
         {expandable ? (
-          <button onClick={() => setOpen((o) => !o)} aria-label={open ? "Recolher" : "Expandir"} className="w-3 shrink-0 text-stone-400 hover:text-stone-800">
+          <button onClick={() => setOpen((o) => !o)} aria-label={open ? t("tools.inspector.collapse") : t("tools.inspector.expandOne")} className="w-3 shrink-0 text-stone-400 hover:text-stone-800">
             {open ? "▾" : "▸"}
           </button>
         ) : (
@@ -36,12 +38,12 @@ function TreeRow({ node, depth, openDepth, onCopy }: RowProps) {
         )}
         <span className="font-medium text-teal-800">{node.label}</span>
         <span className={`min-w-0 truncate ${TYPE_COLOR[node.type]}`} title={node.summary}>{node.summary}</span>
-        {expandable && node.type === "element" && <span className={DIM}>{node.childCount} {node.childCount === 1 ? "item" : "itens"}</span>}
+        {expandable && node.type === "element" && <span className={DIM}>{tn("tools.inspector.item", node.childCount)}</span>}
         <button
-          onClick={() => onCopy(node.copy(), "Nó copiado")}
+          onClick={() => onCopy(node.copy(), t("tools.inspector.nodeCopied"))}
           className="ml-auto shrink-0 px-2 font-sans text-xs text-stone-400 opacity-0 hover:text-teal-700 focus:opacity-100 group-hover:opacity-100"
         >
-          Copiar
+          {t("tools.inspector.copyNode")}
         </button>
       </div>
       {open && expandable && (
@@ -51,7 +53,7 @@ function TreeRow({ node, depth, openDepth, onCopy }: RowProps) {
           ))}
           {children.length > shown && (
             <div style={{ paddingLeft: (depth + 1) * 18 + 30 }} className="py-1.5">
-              <button className={BTN} onClick={() => setShown((n) => n + CHUNK)}>Mostrar mais {CHUNK} (restam {children.length - shown})</button>
+              <button className={BTN} onClick={() => setShown((n) => n + CHUNK)}>{t("tools.inspector.showMore", { step: CHUNK, left: children.length - shown })}</button>
             </div>
           )}
         </div>
@@ -70,6 +72,7 @@ interface Props {
 }
 
 export default function TreeViewer({ root, getText, onCopy }: Props) {
+  const { t, number } = useI18n();
   const [tab, setTab] = useState<"arvore" | "texto">("arvore");
   const [openDepth, setOpenDepth] = useState(2);
   const [treeKey, setTreeKey] = useState(0);
@@ -83,18 +86,18 @@ export default function TreeViewer({ root, getText, onCopy }: Props) {
   return (
     <div>
       <div role="tablist" className={TABLIST}>
-        <button role="tab" aria-selected={tab === "arvore"} onClick={() => setTab("arvore")} className={tabClass(tab === "arvore")}>Árvore</button>
-        <button role="tab" aria-selected={tab === "texto"} onClick={() => setTab("texto")} className={tabClass(tab === "texto")}>Texto formatado</button>
+        <button role="tab" aria-selected={tab === "arvore"} onClick={() => setTab("arvore")} className={tabClass(tab === "arvore")}>{t("tools.inspector.tree")}</button>
+        <button role="tab" aria-selected={tab === "texto"} onClick={() => setTab("texto")} className={tabClass(tab === "texto")}>{t("tools.inspector.formatted")}</button>
       </div>
       <div className={BAR}>
         {tab === "arvore" && (
           <>
-            <span className={DIM}>Expandir</span>
-            {[1, 2, 3].map((d) => <button key={d} className={BTN} onClick={() => expand(d)}>Nível {d}</button>)}
-            <button className={BTN} onClick={() => expand(0)}>Recolher tudo</button>
+            <span className={DIM}>{t("tools.inspector.expand")}</span>
+            {[1, 2, 3].map((d) => <button key={d} className={BTN} onClick={() => expand(d)}>{t("tools.inspector.level", { n: d })}</button>)}
+            <button className={BTN} onClick={() => expand(0)}>{t("tools.inspector.collapseAll")}</button>
           </>
         )}
-        <button className={`${BTN} ml-auto`} onClick={() => onCopy(getText(), "Conteúdo copiado")}>Copiar tudo</button>
+        <button className={`${BTN} ml-auto`} onClick={() => onCopy(getText(), t("tools.inspector.contentCopied"))}>{t("tools.inspector.copyAll")}</button>
       </div>
       {tab === "arvore" ? (
         <div role="tree" className="max-h-[32rem] overflow-auto py-2 font-mono text-xs text-stone-800" data-testid="tree">
@@ -106,7 +109,7 @@ export default function TreeViewer({ root, getText, onCopy }: Props) {
             {text.length > MAX_TEXT_CHARS ? text.slice(0, MAX_TEXT_CHARS) : text}
           </pre>
           {text.length > MAX_TEXT_CHARS && (
-            <p className={`border-t border-stone-200 px-4 py-2 text-xs ${DIM}`}>Exibição truncada em {MAX_TEXT_CHARS.toLocaleString("pt-BR")} caracteres. Use “Copiar tudo” para o conteúdo completo.</p>
+            <p className={`border-t border-stone-200 px-4 py-2 text-xs ${DIM}`}>{t("tools.inspector.truncated", { max: number(MAX_TEXT_CHARS) })}</p>
           )}
         </div>
       )}

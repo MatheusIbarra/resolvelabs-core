@@ -1,16 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { supportApi, STATUS_LABEL, type Ticket } from "@/lib/supportApi";
+import { supportApi, type Ticket } from "@/lib/supportApi";
+import { useI18n } from "@/i18n/I18nProvider";
 import { usePolling } from "@/hooks/usePolling";
 
 import { Loading, LoadingLabel } from "../ui/Loading";
 
 const POLL_MS = 8000;
 const MESSAGE_MAX = 4000;
-
-const fmtTime = (iso: string) =>
-  new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
 export const STATUS_STYLE: Record<Ticket["status"], string> = {
   open: "bg-amber-50 text-amber-800",
@@ -19,7 +17,8 @@ export const STATUS_STYLE: Record<Ticket["status"], string> = {
 };
 
 export function StatusTag({ status }: { status: Ticket["status"] }) {
-  return <span className={`badge ${STATUS_STYLE[status]}`}>{STATUS_LABEL[status]}</span>;
+  const { t } = useI18n();
+  return <span className={`badge ${STATUS_STYLE[status]}`}>{t(`support.status.${status}`)}</span>;
 }
 
 interface TicketThreadProps {
@@ -34,6 +33,8 @@ interface TicketThreadProps {
 
 /** Histórico + caixa de resposta. Atualiza por polling (a cada 8s, ao focar a aba) — sem WebSockets. */
 export default function TicketThread({ ticketId, viewer, actions, onChange }: TicketThreadProps) {
+  const tr = useI18n();
+  const { t } = tr;
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -67,7 +68,7 @@ export default function TicketThread({ ticketId, viewer, actions, onChange }: Ti
         return fresh;
       });
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : "Falha ao carregar o ticket.");
+      setLoadError(err instanceof Error ? err.message : t("support.thread.loadFailed"));
     }
   }, POLL_MS);
 
@@ -90,7 +91,7 @@ export default function TicketThread({ ticketId, viewer, actions, onChange }: Ti
       apply(updated);
       setDraft("");
     } catch (err) {
-      setSendError(err instanceof Error ? err.message : "Falha ao enviar.");
+      setSendError(err instanceof Error ? err.message : t("support.thread.sendFailed"));
     } finally {
       setSending(false);
     }
@@ -99,7 +100,7 @@ export default function TicketThread({ ticketId, viewer, actions, onChange }: Ti
   if (!ticket) {
     return (
       <p className="p-4 text-sm text-stone-500" role={loadError ? "alert" : "status"}>
-        {loadError ?? <Loading>Carregando…</Loading>}
+        {loadError ?? <Loading>{t("common.ui.loading")}</Loading>}
       </p>
     );
   }
@@ -128,7 +129,7 @@ export default function TicketThread({ ticketId, viewer, actions, onChange }: Ti
           return (
             <li key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
               <span className="mb-1 text-xs text-stone-500">
-                {m.sender === "admin" ? "Suporte" : "Usuário"} · {fmtTime(m.createdAt)}
+                {m.sender === "admin" ? t("support.thread.senderSupport") : t("support.thread.senderUser")} · {tr.dateTime(m.createdAt)}
               </span>
               <p
                 className={`max-w-[85%] whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-sm ${
@@ -145,12 +146,12 @@ export default function TicketThread({ ticketId, viewer, actions, onChange }: Ti
 
       {loadError && (
         <p className="border-t border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-900" role="alert">
-          Sem conexão — tentando de novo…
+          {t("support.thread.offline")}
         </p>
       )}
 
       {closed ? (
-        <p className="border-t border-stone-200 p-3 text-sm text-stone-500">Ticket fechado. Abra um novo se precisar de ajuda.</p>
+        <p className="border-t border-stone-200 p-3 text-sm text-stone-500">{t("support.thread.closedNote")}</p>
       ) : (
         <form
           className="border-t border-stone-200 p-3"
@@ -170,8 +171,8 @@ export default function TicketThread({ ticketId, viewer, actions, onChange }: Ti
             }}
             maxLength={MESSAGE_MAX}
             rows={3}
-            placeholder={viewer === "admin" ? "Responder ao cliente…" : "Escreva sua mensagem…"}
-            aria-label="Mensagem"
+            placeholder={viewer === "admin" ? t("support.thread.placeholderAdmin") : t("support.thread.placeholderUser")}
+            aria-label={t("support.thread.messageAria")}
             className="input resize-none"
           />
           {sendError && (
@@ -180,9 +181,9 @@ export default function TicketThread({ ticketId, viewer, actions, onChange }: Ti
             </p>
           )}
           <div className="mt-2 flex items-center justify-between">
-            <span className="text-xs text-stone-400">Ctrl+Enter envia</span>
+            <span className="text-xs text-stone-400">{t("support.thread.ctrlEnter")}</span>
             <button type="submit" disabled={sending || draft.trim().length === 0} className="btn-primary">
-              {sending ? <LoadingLabel>Enviando…</LoadingLabel> : "Enviar"}
+              {sending ? <LoadingLabel>{t("support.widget.sending")}</LoadingLabel> : t("support.thread.send")}
             </button>
           </div>
         </form>

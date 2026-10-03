@@ -1,3 +1,4 @@
+import { activeTranslator } from "@/i18n/active";
 import type { SheetInfo } from "./types";
 
 export interface SpreadsheetEngine {
@@ -42,7 +43,7 @@ function createWorkerEngine(buffer: ArrayBuffer, filename: string): Promise<Spre
       if (!entry) return;
       pending.delete(id);
       if (ok) entry.resolve(payload);
-      else entry.reject(new SpreadsheetParseError(error ?? "Falha ao ler a planilha."));
+      else entry.reject(new SpreadsheetParseError(error ?? activeTranslator().t("tools.inspector.sheetFailed")));
     };
     // Falha ao carregar o script do worker (CSP, bundler, navegador antigo): usa a thread principal.
     worker.onerror = () => {
@@ -81,7 +82,7 @@ async function createMainEngine(buffer: ArrayBuffer, filename: string): Promise<
       dispose: () => {},
     };
   } catch (err) {
-    throw new SpreadsheetParseError(err instanceof Error ? err.message : "Falha ao ler a planilha.");
+    throw new SpreadsheetParseError(err instanceof Error ? err.message : activeTranslator().t("tools.inspector.sheetFailed"));
   }
 }
 

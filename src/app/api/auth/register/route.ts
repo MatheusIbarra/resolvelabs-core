@@ -1,3 +1,4 @@
+import { apiError } from "@/lib/apiError";
 import { NextResponse, type NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
@@ -14,28 +15,28 @@ const BCRYPT_ROUNDS = 12;
 const MAX_CODE_ATTEMPTS = 5;
 
 export async function POST(request: NextRequest) {
-  const limited = rateLimit(`register:ip:${clientIp(request)}`, 10, 60 * 60_000);
+  const limited = rateLimit(`register:ip:${clientIp(request)}`, 10, 60 * 60_000, request);
   if (limited) return limited;
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Corpo da requisição inválido." }, { status: 400 });
+    return apiError(request, "invalidBody", 400);
   }
 
   // Só lemos email, password, phone, termsAccepted e ref. Qualquer outro campo (ex.: role) é ignorado.
   const email = parseEmail(body?.email);
-  if (!email) return NextResponse.json({ error: "E-mail inválido." }, { status: 400 });
+  if (!email) return apiError(request, "invalidEmail", 400);
 
   const pwError = passwordError(body?.password);
-  if (pwError) return NextResponse.json({ error: pwError }, { status: 400 });
+  if (pwError) return apiError(request, pwError.key, 400, pwError.vars);
 
   const phone = parsePhone(body?.phone);
-  if (!phone) return NextResponse.json({ error: "Celular inválido. Use o formato (XX) XXXXX-XXXX." }, { status: 400 });
+  if (!phone) return apiError(request, "invalidPhone", 400);
 
   if (body?.termsAccepted !== true) {
-    return NextResponse.json({ error: "É necessário aceitar os Termos de Uso." }, { status: 400 });
+    return apiError(request, "termsRequired", 400);
   }
 
   try {
@@ -71,13 +72,13 @@ export async function POST(request: NextRequest) {
         // Duplicidade de e-mail encerra; colisão de affiliateCode tenta outro código.
         const keyPattern = (err as { keyPattern?: Record<string, unknown> }).keyPattern;
         if (keyPattern && !("affiliateCode" in keyPattern)) {
-          return NextResponse.json({ error: "Este e-mail já está cadastrado." }, { status: 409 });
+          return apiError(request, "emailTaken", 409);
         }
       }
     }
     throw new Error("Não foi possível gerar um affiliateCode único.");
   } catch (err) {
     console.error("[auth/register]", err);
-    return NextResponse.json({ error: "Erro interno. Tente novamente." }, { status: 500 });
+    return apiError(request, "internal", 500);
   }
 }

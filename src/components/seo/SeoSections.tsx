@@ -1,26 +1,28 @@
-import Link from "next/link";
-import { relatedTools, type SeoTool } from "@/lib/seo-tools";
+import { Link } from "@/i18n/navigation";
+import type { Locale } from "@/i18n/config";
+import { getTranslator } from "@/i18n/server";
+import { relatedTools, type SeoTool } from "@/lib/seo-content";
 import { breadcrumbSchema, faqPageSchema, softwareApplicationSchema } from "@/lib/seo-schema";
 import JsonLd from "./JsonLd";
 
-function offerLabel(t: SeoTool): string {
-  const hasFree = t.offers.some((o) => o.price === 0);
-  const hasPaid = t.offers.some((o) => o.price > 0);
-  return hasFree && hasPaid ? "Grátis + PRO" : hasPaid ? "PRO" : "Gratuito";
-}
-
 /** Texto de SEO em volta da ferramenta: recursos, privacidade, passos, FAQ visível e links relacionados + JSON-LD. */
-export default function SeoSections({ tool }: { tool: SeoTool }) {
-  const related = relatedTools(tool);
+export default function SeoSections({ tool, locale }: { tool: SeoTool; locale: Locale }) {
+  const { t } = getTranslator(locale);
+  const related = relatedTools(locale, tool);
+  const offerLabel = (r: SeoTool): string => {
+    const hasFree = r.offers.some((o) => o.price === 0);
+    const hasPaid = r.offers.some((o) => o.price > 0);
+    return hasFree && hasPaid ? t("common.seoSections.offerFreePro") : hasPaid ? t("common.seoSections.offerPro") : t("common.seoSections.offerFree");
+  };
   return (
     <>
-      <JsonLd data={softwareApplicationSchema(tool)} />
-      <JsonLd data={faqPageSchema(tool)} />
-      <JsonLd data={breadcrumbSchema(tool)} />
+      <JsonLd data={softwareApplicationSchema(locale, tool)} />
+      <JsonLd data={faqPageSchema(locale, tool)} />
+      <JsonLd data={breadcrumbSchema(locale, tool)} />
 
       <div className="mt-12 grid gap-6 lg:grid-cols-3">
         <section className="card p-6 lg:col-span-2">
-          <h2 className="section-title mb-4">O que você ganha</h2>
+          <h2 className="section-title mb-4">{t("common.seoSections.whatYouGet")}</h2>
           <ul className="space-y-3 text-sm text-stone-700">
             {tool.features.map((f) => (
               <li key={f} className="flex gap-3">
@@ -34,11 +36,8 @@ export default function SeoSections({ tool }: { tool: SeoTool }) {
         </section>
 
         <section className="card p-6">
-          <h2 className="section-title mb-2">Privacidade no navegador</h2>
-          <p className="text-sm leading-relaxed text-stone-600">
-            {tool.privacy ??
-              "O arquivo é processado no seu navegador e não passa pelos nossos servidores. Você pode usar a ferramenta com extratos e documentos de clientes sem expor o conteúdo a terceiros."}
-          </p>
+          <h2 className="section-title mb-2">{t("common.seoSections.privacyTitle")}</h2>
+          <p className="text-sm leading-relaxed text-stone-600">{tool.privacy ?? t("common.seoSections.privacyDefault")}</p>
         </section>
       </div>
 
@@ -57,7 +56,7 @@ export default function SeoSections({ tool }: { tool: SeoTool }) {
       )}
 
       <section className="mt-6" aria-labelledby="faq-title">
-        <h2 id="faq-title" className="section-title mb-4">Perguntas frequentes</h2>
+        <h2 id="faq-title" className="section-title mb-4">{t("common.seoSections.faq")}</h2>
         <div className="space-y-3">
           {tool.faq.map((item) => (
             <details key={item.q} className="card group p-5">
@@ -72,8 +71,8 @@ export default function SeoSections({ tool }: { tool: SeoTool }) {
       </section>
 
       {related.length > 0 && (
-        <nav className="mt-10" aria-label="Ferramentas relacionadas">
-          <h2 className="section-title mb-4">Ferramentas relacionadas</h2>
+        <nav className="mt-10" aria-label={t("common.seoSections.related")}>
+          <h2 className="section-title mb-4">{t("common.seoSections.related")}</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((r) => (
               <Link key={r.slug} href={r.path} className="card card-interactive p-4 hover:border-teal-600">

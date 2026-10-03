@@ -30,3 +30,6 @@ TODA tela nova ou alterada (inclusive admin, suporte, termos e ferramentas) segu
 - Criar módulos de estilo paralelos (ex.: `adminUi.ts`, `*/ui.ts` com tokens próprios). Estenda `globals.css`.
 
 Antes de entregar qualquer UI: rode `npm run check:design` e confira uma captura de tela ao lado de uma tela existente.
+
+## Idiomas: nenhum texto fixo na interface
+Todo texto visível (inclusive `aria-label`, `placeholder`, toasts, erros de API, metadados e conteúdo de SEO) vem de `src/i18n/messages/*.ts`, nos três idiomas (en, es, pt). Links e navegação usam `@/i18n/navigation` (`npm run check:i18n`). Veja a seção "Idiomas (i18n)" do README.

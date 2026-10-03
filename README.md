@@ -6,7 +6,7 @@ Micro-ferramentas para contadores, lojistas, corretores e desenvolvedores, vendi
 
 | Ferramenta | Rota | Acesso |
 | --- | --- | --- |
-| Conversor de PDF para OFX | `/ferramentas/pdf-para-ofx` | Grátis (3 conversões), depois PRO |
+| Conversor de PDF para OFX | `/ferramentas/pdf-para-ofx` (canônico; veja a seção Idiomas) | Grátis (3 conversões), depois PRO |
 | Reparador de XML Merchant | `/ferramentas/reparador-xml` | PRO |
 | Otimizador de Imagens em Lote | `/ferramentas/processador-imagens` | PRO |
 | Gerador de Mock Data BR (CPF, CNPJ, CEP, PIX) | `/ferramentas/mock-data-br` | Grátis |
@@ -30,6 +30,20 @@ Limites conhecidos:
 - **Painel admin** (`/admin`): usuários e concessão de PRO, cupons, afiliados e tickets de suporte.
 - **Suporte**: widget flutuante com FAQ pesquisável e tickets com chat. Não usa WebSockets: a atualização é por polling (8 s no chat aberto, 15 s na lista, 60 s com o widget fechado), pausado com a aba em segundo plano. Os admins respondem em `/admin/support`.
 - **Interface**: barra de progresso a cada troca de página e animações de entrada, respeitando `prefers-reduced-motion`.
+
+## Idiomas (i18n)
+
+O site é multilíngue: **inglês (padrão), espanhol e português**. Cada idioma tem prefixo na URL (`/en`, `/es`, `/pt`) e segmentos traduzidos (ex.: `/en/tools/pdf-to-ofx`, `/es/herramientas/pdf-a-ofx`, `/pt/ferramentas/pdf-para-ofx`).
+
+- **Idioma inicial:** cookie `NEXT_LOCALE` (escolha manual no seletor do cabeçalho) > `Accept-Language` do navegador > padrão. Mudar o padrão: `DEFAULT_LOCALE` em `src/i18n/config.ts`.
+- **URLs antigas** (só em português, sem prefixo) respondem 301 para `/pt/...`.
+- **Textos:** `src/i18n/messages/*.ts`, um arquivo por área, com `en`, `es` e `pt` lado a lado. O TypeScript falha se faltar uma chave em qualquer idioma. Em componentes cliente use `useI18n()`; em servidor, `getTranslator(locale)`; nas rotas de API, `apiError(request, chave, status)` (idioma via `x-locale`, cookie ou `Accept-Language`).
+- **Links:** sempre `Link`/`useRouter`/`usePathname` de `@/i18n/navigation` com o caminho canônico (`/ferramentas/...`). O prefixo e a tradução do segmento são aplicados sozinhos. `npm run check:i18n` falha se alguém importar `next/link` direto.
+- **Segmentos e slugs traduzidos:** tabela em `src/i18n/paths.ts` (o middleware reescreve a URL traduzida para as pastas de `src/app/[lang]`).
+- **SEO:** `hreflang` e canonical por página (`buildAlternates`), `x-default`, sitemap com alternativas por idioma, `<html lang>` e Open Graph por idioma.
+- **Blog:** `content/blog/<idioma>/<slug>.mdx`. O mesmo nome de arquivo nos três idiomas liga as traduções; artigo sem tradução só aparece (e só entra no hreflang) nos idiomas em que existe.
+- **Novo idioma:** inclua o código em `LOCALES`, os metadados em `config.ts`, os slugs em `paths.ts`, um objeto em cada arquivo de `messages/` e uma pasta em `content/blog/`.
+- **Limitação:** o cadastro exige celular brasileiro (DDD + 9 dígitos); o preço segue em BRL (só o rótulo muda por idioma).
 
 ## Stack
 

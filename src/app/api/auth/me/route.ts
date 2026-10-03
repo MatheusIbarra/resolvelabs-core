@@ -1,3 +1,4 @@
+import { apiError } from "@/lib/apiError";
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySession } from "@/lib/session";
 import { getCurrentUser, issueSession, publicUser, unauthenticated } from "@/lib/serverAuth";
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
     // Estado atual no banco (role pode ter mudado; PRO manual pode ter expirado).
     const user = session ? await getCurrentUser(request) : null;
     if (!user) {
-      const response = unauthenticated();
+      const response = unauthenticated(request);
       if (token) response.cookies.delete(SESSION_COOKIE);
       return response;
     }
@@ -32,6 +33,6 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (err) {
     console.error("[auth/me]", err);
-    return NextResponse.json({ error: "Erro interno. Tente novamente." }, { status: 500 });
+    return apiError(request, "internal", 500);
   }
 }

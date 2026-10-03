@@ -3,7 +3,8 @@
 import { useRef, useState } from "react";
 import { fixMerchantXml, xmlToBlob, type XmlFixResult } from "@/utils/xmlFixer";
 import { downloadBlob } from "@/utils/download";
-import { MSG, errorMessage } from "@/lib/messages";
+import { errorMessage } from "@/lib/messages";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Loading, LoadingLabel } from "../ui/Loading";
 import { useToast } from "../ui/Toast";
 import UsageBadge from "./UsageBadge";
@@ -12,12 +13,13 @@ const FREE_ANALYSES = 1;
 const MAX_ROWS = 12;
 
 const SEVERITY = {
-  error: { label: "Erro", cls: "badge-warn" },
-  warning: { label: "Aviso", cls: "badge-neutral" },
-  fixed: { label: "Corrigido", cls: "badge-brand" },
+  error: { key: "severityError", cls: "badge-warn" },
+  warning: { key: "severityWarning", cls: "badge-neutral" },
+  fixed: { key: "severityFixed", cls: "badge-brand" },
 } as const;
 
 export default function XmlFixer() {
+  const { t } = useI18n();
   const toast = useToast();
   const [feedUrl, setFeedUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -33,7 +35,7 @@ export default function XmlFixer() {
   const acceptFile = (f: File | undefined) => {
     if (!f) return;
     if (!/\.xml$/i.test(f.name)) {
-      toast.error(MSG.xml.invalidFile);
+      toast.error(t("msg.xml.invalidFile"));
       return;
     }
     setFile(f);
@@ -47,18 +49,18 @@ export default function XmlFixer() {
       if (!res.ok) throw new Error(String(res.status));
       return { text: await res.text(), name: "feed" };
     } catch {
-      throw new Error(MSG.xml.fetchFailed); // normalmente bloqueio de CORS
+      throw new Error(t("msg.xml.fetchFailed")); // normalmente bloqueio de CORS
     }
   };
 
   const analyze = async () => {
     if (isAnalyzing) return;
     if (!hasSource) {
-      toast.error(MSG.xml.needSource);
+      toast.error(t("msg.xml.needSource"));
       return;
     }
     if (analysesUsed >= FREE_ANALYSES) {
-      toast.warning(MSG.xml.limitReached);
+      toast.warning(t("msg.xml.limitReached"));
       return;
     }
     setIsAnalyzing(true);
@@ -69,9 +71,9 @@ export default function XmlFixer() {
       setSourceName(name);
       setResult(fixed);
       setAnalysesUsed((n) => n + 1);
-      toast.success(MSG.xml.analyzed(fixed.stats.items, fixed.stats.errors, fixed.stats.fixed), { title: MSG.xml.analyzedTitle });
+      toast.success(t("msg.xml.analyzed", { items: fixed.stats.items, errors: fixed.stats.errors, fixed: fixed.stats.fixed }), { title: t("msg.xml.analyzedTitle") });
     } catch (err) {
-      toast.error(errorMessage(err, MSG.xml.analyzeFailed));
+      toast.error(errorMessage(err, t("msg.xml.analyzeFailed")));
     } finally {
       setIsAnalyzing(false);
     }
@@ -80,11 +82,11 @@ export default function XmlFixer() {
   const download = () => {
     if (!result) return;
     if (result.wellFormed === false) {
-      toast.error(MSG.xml.notWellFormed);
+      toast.error(t("msg.xml.notWellFormed"));
       return;
     }
-    downloadBlob(xmlToBlob(result.xml), `${sourceName}-corrigido.xml`);
-    toast.success(MSG.xml.downloaded, { title: MSG.xml.downloadedTitle });
+    downloadBlob(xmlToBlob(result.xml), `${sourceName}-${t("tools.xml.suffix")}.xml`);
+    toast.success(t("msg.xml.downloaded"), { title: t("msg.xml.downloadedTitle") });
   };
 
   const visible = result?.issues.slice(0, MAX_ROWS) ?? [];
@@ -95,9 +97,9 @@ export default function XmlFixer() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Entrada */}
         <section className="card p-6">
-          <h2 className="section-title mb-5">1. Seu feed</h2>
+          <h2 className="section-title mb-5">{t("tools.xml.step1")}</h2>
 
-          <p className="label">Upload de arquivo XML</p>
+          <p className="label">{t("tools.xml.uploadLabel")}</p>
           <div
             role="button"
             tabIndex={0}
@@ -139,19 +141,19 @@ export default function XmlFixer() {
               <span className="font-medium text-teal-800">{file.name}</span>
             ) : (
               <>
-                <span className="font-medium text-stone-800">Arraste um arquivo .xml</span>
-                <span className="text-stone-500"> ou clique para buscar</span>
+                <span className="font-medium text-stone-800">{t("tools.xml.dragXml")}</span>
+                <span className="text-stone-500">{t("tools.xml.orClick")}</span>
               </>
             )}
           </div>
 
           <div className="my-5 flex items-center gap-3 text-sm text-stone-400">
             <span className="h-px flex-1 bg-stone-200" />
-            ou
+            {t("tools.xml.or")}
             <span className="h-px flex-1 bg-stone-200" />
           </div>
 
-          <label htmlFor="feed-url" className="label">URL do Feed XML</label>
+          <label htmlFor="feed-url" className="label">{t("tools.xml.urlLabel")}</label>
           <input
             id="feed-url"
             type="url"
@@ -161,34 +163,34 @@ export default function XmlFixer() {
               setResult(null);
             }}
             disabled={file !== null}
-            placeholder="https://sualoja.com.br/feed-merchant.xml"
+            placeholder={t("tools.xml.urlPlaceholder")}
             className="input"
           />
           <p className="mt-2 text-xs text-stone-500">
-            Tudo é processado no seu navegador. Se o servidor do feed bloquear a leitura direta, envie o arquivo.
+            {t("tools.xml.hint")}
           </p>
           {file && (
             <button onClick={() => { setFile(null); setResult(null); }} className="mt-2 text-xs text-stone-500 hover:text-red-700 hover:underline">
-              Remover arquivo
+              {t("tools.xml.removeFile")}
             </button>
           )}
 
           <button onClick={analyze} disabled={!hasSource || isAnalyzing} className="btn-primary mt-6 w-full py-3">
-            {isAnalyzing ? <LoadingLabel>Analisando feed…</LoadingLabel> : "Analisar feed"}
+            {isAnalyzing ? <LoadingLabel>{t("tools.xml.analyzing")}</LoadingLabel> : t("tools.xml.analyze")}
           </button>
         </section>
 
         {/* Resultado */}
         <section className="card flex flex-col p-6">
-          <h2 className="section-title mb-5">2. Resultado da análise</h2>
+          <h2 className="section-title mb-5">{t("tools.xml.step2")}</h2>
 
           {result ? (
             <>
               <div className="mb-5 flex flex-wrap gap-2">
-                <span className="badge-neutral">{result.stats.items} produtos analisados</span>
-                <span className="badge-brand">{result.stats.fixed} correções automáticas</span>
-                <span className="badge-warn">{result.stats.errors} erros</span>
-                <span className="badge-neutral">{result.stats.warnings} avisos</span>
+                <span className="badge-neutral">{t("tools.xml.itemsAnalyzed", { count: result.stats.items })}</span>
+                <span className="badge-brand">{t("tools.xml.fixes", { count: result.stats.fixed })}</span>
+                <span className="badge-warn">{t("tools.xml.errors", { count: result.stats.errors })}</span>
+                <span className="badge-neutral">{t("tools.xml.warnings", { count: result.stats.warnings })}</span>
               </div>
 
               {result.issues.length > 0 ? (
@@ -196,50 +198,50 @@ export default function XmlFixer() {
                   <table className="w-full text-left text-sm">
                     <thead className="sticky top-0 bg-stone-50 text-xs text-stone-500">
                       <tr>
-                        <th className="px-3 py-2 font-medium">Produto</th>
-                        <th className="px-3 py-2 font-medium">Situação</th>
-                        <th className="px-3 py-2 font-medium">Detalhe</th>
+                        <th className="px-3 py-2 font-medium">{t("tools.xml.colProduct")}</th>
+                        <th className="px-3 py-2 font-medium">{t("tools.xml.colStatus")}</th>
+                        <th className="px-3 py-2 font-medium">{t("tools.xml.colDetail")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-100">
                       {visible.map((issue, i) => (
                         <tr key={i}>
                           <td className="whitespace-nowrap px-3 py-2 font-medium text-stone-900">
-                            {issue.itemIndex >= 0 ? (issue.itemId ?? `#${issue.itemIndex + 1}`) : "Feed"}
+                            {issue.itemIndex >= 0 ? (issue.itemId ?? `#${issue.itemIndex + 1}`) : t("tools.xml.feedLabel")}
                           </td>
-                          <td className="px-3 py-2"><span className={SEVERITY[issue.severity].cls}>{SEVERITY[issue.severity].label}</span></td>
+                          <td className="px-3 py-2"><span className={SEVERITY[issue.severity].cls}>{t(`tools.xml.${SEVERITY[issue.severity].key}`)}</span></td>
                           <td className="px-3 py-2 text-stone-700">{issue.message}</td>
                         </tr>
                       ))}
                       {hidden > 0 && (
-                        <tr><td colSpan={3} className="px-3 py-2 text-xs text-stone-500">+ {hidden} outros itens</td></tr>
+                        <tr><td colSpan={3} className="px-3 py-2 text-xs text-stone-500">{t("tools.xml.more", { count: hidden })}</td></tr>
                       )}
                     </tbody>
                   </table>
                 </div>
               ) : (
-                <p className="mb-6 text-sm text-teal-800">Nenhum problema encontrado no feed.</p>
+                <p className="mb-6 text-sm text-teal-800">{t("tools.xml.noIssues")}</p>
               )}
 
               {result.stats.errors > 0 && (
                 <p className="mb-4 text-xs text-stone-500">
-                  Os erros não podem ser corrigidos automaticamente (ex.: preço vazio, imagem ausente). Corrija-os na sua loja.
+                  {t("tools.xml.errorsNote")}
                 </p>
               )}
 
               <button onClick={download} className="btn-primary mt-auto w-full py-3">
-                Baixar XML corrigido
+                {t("tools.xml.download")}
               </button>
             </>
           ) : (
             <div className="flex flex-1 items-center justify-center rounded-md border border-dashed border-stone-300 p-8 text-center text-sm text-stone-500">
-              {isAnalyzing ? <Loading>Analisando os produtos…</Loading> : "Envie um arquivo ou informe a URL e clique em “Analisar feed” para ver os problemas."}
+              {isAnalyzing ? <Loading>{t("tools.xml.analyzingProducts")}</Loading> : t("tools.xml.empty")}
             </div>
           )}
         </section>
       </div>
 
-      <UsageBadge>Uso gratuito: {analysesUsed}/{FREE_ANALYSES} análise</UsageBadge>
+      <UsageBadge>{t("tools.xml.usage", { used: analysesUsed, limit: FREE_ANALYSES })}</UsageBadge>
     </>
   );
 }

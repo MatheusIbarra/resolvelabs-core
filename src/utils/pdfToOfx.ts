@@ -20,12 +20,13 @@ export interface ParseResult {
 
 export class PdfNoTextError extends Error {
   constructor() {
-    super("Este PDF não tem texto selecionável (parece escaneado). Baixe o extrato em PDF direto do banco.");
+    super(activeTranslator().t("tools.util.pdfNoText"));
     this.name = "PdfNoTextError";
   }
 }
 
 import { loadPdfJs, type PdfJs } from "./pdfjs";
+import { activeTranslator } from "@/i18n/active";
 
 // --- 1. Extração de linhas do PDF ------------------------------------------------
 
@@ -249,9 +250,9 @@ export function parseStatementLines(lines: string[], options: { defaultYear?: nu
     lastWasTransaction = true;
   }
 
-  if (balanceColumn) warnings.push("Detectamos uma coluna de saldo: usamos o valor da transação e ignoramos o saldo.");
+  if (balanceColumn) warnings.push(activeTranslator().t("tools.util.pdfBalance"));
   if (presumedSign > 0) {
-    warnings.push(`${presumedSign} transação(ões) sem sinal explícito foram tratadas como crédito. Confira os débitos antes de importar.`);
+    warnings.push(activeTranslator().tn("tools.util.pdfSigns", presumedSign));
   }
   return { transactions, warnings };
 }

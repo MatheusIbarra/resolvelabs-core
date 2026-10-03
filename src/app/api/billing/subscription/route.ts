@@ -1,3 +1,4 @@
+import { apiError } from "@/lib/apiError";
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser, unauthenticated } from "@/lib/serverAuth";
 import { StripeNotConfiguredError, getStripe } from "@/lib/stripe";
@@ -12,7 +13,7 @@ const iso = (unixSeconds: number) => new Date(unixSeconds * 1000).toISOString();
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
-    if (!user) return unauthenticated();
+    if (!user) return unauthenticated(request);
 
     let summary: SubscriptionSummary = { kind: "none" };
 
@@ -49,9 +50,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ summary, bonusDays: user.referralRewardDays ?? 0 }, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
     if (err instanceof StripeNotConfiguredError) {
-      return NextResponse.json({ error: "Pagamentos indisponíveis no momento." }, { status: 503 });
+      return apiError(request, "paymentsUnavailable", 503);
     }
     console.error("[billing/subscription]", err);
-    return NextResponse.json({ error: "Não foi possível carregar sua assinatura." }, { status: 500 });
+    return apiError(request, "subscriptionFailed", 500);
   }
 }

@@ -3,22 +3,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MAX_LENGTH, MIN_LENGTH, NoSecureRandomError, estimateStrength, generatePassword, type PasswordOptions } from "@/utils/password";
 import { trackEvent } from "@/lib/track";
-import { MSG } from "@/lib/messages";
+import { useI18n } from "@/i18n/I18nProvider";
 import Alert from "../ui/Alert";
 import { useToast } from "../ui/Toast";
 
 const TOOL = "gerador-senhas";
 
 const CLASSES = [
-  { key: "lower", label: "Letras minúsculas", sample: "a-z" },
-  { key: "upper", label: "Letras maiúsculas", sample: "A-Z" },
-  { key: "digits", label: "Números", sample: "0-9" },
-  { key: "symbols", label: "Símbolos", sample: "!@#$" },
+  { key: "lower", sample: "a-z" },
+  { key: "upper", sample: "A-Z" },
+  { key: "digits", sample: "0-9" },
+  { key: "symbols", sample: "!@#$" },
 ] as const;
+
+const STRENGTH_KEY = ["weak", "fair", "strong", "veryStrong"] as const;
 
 const BAR = ["bg-red-600", "bg-amber-500", "bg-teal-600", "bg-teal-700"];
 
 export default function PasswordGenerator() {
+  const { t } = useI18n();
   const toast = useToast();
   const [options, setOptions] = useState<PasswordOptions>({ length: 16, upper: true, lower: true, digits: true, symbols: true, avoidAmbiguous: false });
   // A senha só existe depois da montagem: nunca vai no HTML gerado no servidor.
@@ -49,19 +52,19 @@ export default function PasswordGenerator() {
     if (!password) return;
     try {
       await navigator.clipboard.writeText(password);
-      toast.success(MSG.password.copied);
+      toast.success(t("msg.password.copied"));
       if (!tracked.current) {
         tracked.current = true;
         trackEvent(TOOL, "use"); // só o evento, nunca a senha
       }
     } catch {
-      toast.error(MSG.password.copyFailed);
+      toast.error(t("msg.password.copyFailed"));
     }
   };
 
   return (
     <div className="card p-6">
-      {unsupported && <Alert variant="error" className="mb-5">{MSG.password.noRandom}</Alert>}
+      {unsupported && <Alert variant="error" className="mb-5">{t("msg.password.noRandom")}</Alert>}
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-stretch">
         <output
@@ -72,15 +75,15 @@ export default function PasswordGenerator() {
           {password || "…"}
         </output>
         <div className="flex gap-2">
-          <button className="btn-secondary" onClick={() => regenerate(options)} disabled={unsupported} data-testid="password-regenerate">Gerar outra</button>
-          <button className="btn-primary" onClick={copy} disabled={!password} data-testid="password-copy">Copiar</button>
+          <button className="btn-secondary" onClick={() => regenerate(options)} disabled={unsupported} data-testid="password-regenerate">{t("tools.password.generateAnother")}</button>
+          <button className="btn-primary" onClick={copy} disabled={!password} data-testid="password-copy">{t("tools.password.copy")}</button>
         </div>
       </div>
 
       <div className="mb-6">
         <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="text-stone-600">Força estimada: <strong className="text-stone-900">{strength.label}</strong></span>
-          <span className="text-xs text-stone-500">{strength.bits} bits</span>
+          <span className="text-stone-600">{t("tools.password.strength")} <strong className="text-stone-900">{t(`tools.password.${STRENGTH_KEY[strength.level - 1]}`)}</strong></span>
+          <span className="text-xs text-stone-500">{t("tools.password.bits", { bits: strength.bits })}</span>
         </div>
         <div className="flex gap-1" aria-hidden>
           {[1, 2, 3, 4].map((n) => (
@@ -91,7 +94,7 @@ export default function PasswordGenerator() {
 
       <div className="mb-6">
         <div className="mb-2 flex items-center justify-between">
-          <label htmlFor="pw-length" className="label !mb-0">Tamanho da senha</label>
+          <label htmlFor="pw-length" className="label !mb-0">{t("tools.password.lengthLabel")}</label>
           <span className="rounded-md bg-stone-100 px-2 py-0.5 font-mono text-sm text-stone-900" data-testid="password-length-value">{options.length}</span>
         </div>
         <input
@@ -107,7 +110,7 @@ export default function PasswordGenerator() {
       </div>
 
       <fieldset>
-        <legend className="label">Tipos de caractere</legend>
+        <legend className="label">{t("tools.password.types")}</legend>
         <div className="grid gap-3 sm:grid-cols-2">
           {CLASSES.map((c) => {
             const isLast = selected.length === 1 && options[c.key];
@@ -122,7 +125,7 @@ export default function PasswordGenerator() {
                     onChange={(e) => setOptions((o) => ({ ...o, [c.key]: e.target.checked }))}
                     data-testid={`pw-${c.key}`}
                   />
-                  {c.label}
+                  {t(`tools.password.${c.key}`)}
                 </span>
                 <span className="font-mono text-xs text-stone-500">{c.sample}</span>
               </label>
@@ -131,9 +134,9 @@ export default function PasswordGenerator() {
         </div>
         <label className="mt-3 flex cursor-pointer items-center gap-3 text-sm text-stone-700">
           <input type="checkbox" className="h-4 w-4 accent-teal-700" checked={options.avoidAmbiguous} onChange={(e) => setOptions((o) => ({ ...o, avoidAmbiguous: e.target.checked }))} />
-          Evitar caracteres parecidos (O, 0, I, l, 1)
+          {t("tools.password.avoid")}
         </label>
-        <p className="mt-2 text-xs text-stone-500">Pelo menos um tipo precisa ficar marcado.</p>
+        <p className="mt-2 text-xs text-stone-500">{t("tools.password.minOne")}</p>
       </fieldset>
     </div>
   );

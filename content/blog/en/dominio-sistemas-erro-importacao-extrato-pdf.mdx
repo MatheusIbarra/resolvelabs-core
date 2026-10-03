@@ -1,0 +1,50 @@
+---
+title: "How to fix the PDF statement import error in Domínio Sistemas"
+description: "Why Domínio doesn't import PDF bank statements, which formats it accepts (OFX, OFC and Febraban) and how to convert the PDF to OFX so you can import it."
+date: "2026-10-02"
+author: "ResolveLabs Team"
+---
+
+You downloaded your client's statement, tried to import it into Domínio and the file was rejected. When the file is a PDF, the reason is usually simple: bank statement import works with structured formats, not PDF.
+
+> ResolveLabs is not affiliated with Domínio Sistemas or Thomson Reuters. This guide uses information from Domínio's public help center and may become outdated depending on your system version.
+
+## Which formats Domínio accepts
+
+According to [Domínio's support center](https://suporte.dominioatendimento.com/central/faces/solucao.html?codigo=238), bank statement import accepts the **OFX**, **OFC** and **Febraban 240** layouts. PDF is not among them.
+
+That makes sense: a PDF shows the statement visually, but it doesn't separate date, amount and description in a way a system can read reliably. OFX carries each entry with its fields identified.
+
+## How to import the statement (step by step)
+
+According to the same help center, the path is the menu **Utilities > Import > Bank statement** (in the Portuguese interface: **Utilitários > Importar > Extrato bancário**). Names may vary by system version, but the flow is this:
+
+1. Enter the statement **period**.
+2. Enter the bank's **ledger account**.
+3. If the company has a branch, enter the company code.
+4. Choose the **layout type** (OFX, for example).
+5. Locate the file and import it. Check the entries shown and save.
+
+## Details that save headaches
+
+- **Description:** Domínio uses the OFX `MEMO` tag as the entry description and, when it's missing, uses `NAME`. An OFX with both fields empty produces entries with no description.
+- **Period:** the help center says the import period is limited to **12 months**. If the statement is longer, split it into files.
+
+## What to do when you only have the PDF
+
+1. **Ask the bank for the OFX first.** Many internet banking sites offer the option to export the statement as OFX. Look for "export" or "save in other formats" on the statement screen.
+2. **If the bank only provides PDF**, convert the PDF to OFX before importing.
+
+<ToolCta slug="conversor-pdf-para-ofx">Convert the PDF statement to OFX in your browser: the PDF never goes through our servers. A free account is required, and some conversions are included at no cost.</ToolCta>
+
+If your bank has its own page, the guides below give the export steps:
+
+- [Nubank statement as OFX](/ferramentas/pdf-para-ofx-nubank)
+- [Itaú statement as OFX](/ferramentas/pdf-para-ofx-itau)
+- [Bradesco statement as OFX](/ferramentas/pdf-para-ofx-bradesco)
+
+## Check the OFX before importing
+
+After generating or downloading the file, open it before importing. Check that the period, the balance and the number of entries match the original statement. Any automatic PDF conversion depends on the bank's layout, so checking is the importer's responsibility.
+
+<ToolCta slug="visualizador-ofx">Open the OFX and check the balance and entries before importing into Domínio.</ToolCta>

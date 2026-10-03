@@ -1,4 +1,6 @@
 import { loadPdfJs } from "../pdfjs";
+import { activeTranslator } from "@/i18n/active";
+import { isoPartsToLocal } from "./format";
 
 // --- PDF ------------------------------------------------------------------------------
 
@@ -16,7 +18,7 @@ export interface PdfInfo {
 
 export class PdfPasswordError extends Error {
   constructor() {
-    super("Este PDF é protegido por senha e não pode ser inspecionado.");
+    super(activeTranslator().t("tools.inspector.pdfPassword"));
     this.name = "PdfPasswordError";
   }
 }
@@ -26,7 +28,7 @@ export function parsePdfDate(raw: string | undefined): string | undefined {
   const m = raw?.match(/^D:(\d{4})(\d{2})?(\d{2})?(\d{2})?(\d{2})?/);
   if (!m) return raw;
   const [, y, mo = "01", d = "01", h, mi] = m;
-  return `${d}/${mo}/${y}${h ? ` ${h}:${mi ?? "00"}` : ""}`;
+  return `${isoPartsToLocal(Number(y), Number(mo), Number(d))}${h ? ` ${h}:${mi ?? "00"}` : ""}`;
 }
 
 export async function inspectPdf(file: File): Promise<PdfInfo> {
@@ -70,7 +72,7 @@ export async function inspectPdf(file: File): Promise<PdfInfo> {
       canvas.style.width = `${Math.floor(viewport.width / dpr)}px`;
       canvas.style.height = `${Math.floor(viewport.height / dpr)}px`;
       const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas indisponível.");
+      if (!ctx) throw new Error(activeTranslator().t("tools.inspector.canvasUnavailable"));
       await first.render({ canvasContext: ctx, canvas, viewport }).promise;
     },
     dispose() {
@@ -110,6 +112,6 @@ export async function inspectImage(file: File): Promise<ImageInfo> {
     };
   } catch {
     URL.revokeObjectURL(previewUrl);
-    throw new Error("Não foi possível decodificar a imagem (arquivo corrompido ou formato não suportado pelo navegador).");
+    throw new Error(activeTranslator().t("tools.inspector.imageDecode"));
   }
 }

@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname } from "@/i18n/navigation";
 
-/** Registra a visita a cada troca de rota (usuário, IP e local são resolvidos no servidor). Falhas são ignoradas. */
+/**
+ * Registra a visita a cada troca de rota (usuário, IP e local são resolvidos no servidor). Falhas são ignoradas.
+ * O caminho é o canônico, sem idioma: o painel de acessos não divide a mesma página em três.
+ */
 export default function PageViewLogger() {
   const pathname = usePathname();
   useEffect(() => {

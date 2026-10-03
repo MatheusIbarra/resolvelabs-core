@@ -1,4 +1,5 @@
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextResponse, NextRequest } from "next/server";
+import { apiError } from "./apiError";
 
 /**
  * Limitador de janela fixa em memória (por instância do servidor).
@@ -12,7 +13,7 @@ export function clientIp(request: NextRequest): string {
 }
 
 /** Retorna uma resposta 429 quando `key` excede `limit` tentativas na janela; senão, null. */
-export function rateLimit(key: string, limit: number, windowMs: number): NextResponse | null {
+export function rateLimit(key: string, limit: number, windowMs: number, request: Request): NextResponse | null {
   // Só para a suíte e2e, que cria dezenas de contas do mesmo IP. Nunca definir em produção.
   if (process.env.RATE_LIMIT_DISABLED === "true") return null;
 
@@ -31,8 +32,5 @@ export function rateLimit(key: string, limit: number, windowMs: number): NextRes
   if (entry.count <= limit) return null;
 
   const retryAfter = Math.max(1, Math.ceil((entry.resetAt - now) / 1000));
-  return NextResponse.json(
-    { error: "Muitas tentativas. Aguarde um pouco e tente novamente." },
-    { status: 429, headers: { "Retry-After": String(retryAfter) } },
-  );
+  return apiError(request, "rateLimited", 429, undefined, undefined, { headers: { "Retry-After": String(retryAfter) } });
 }

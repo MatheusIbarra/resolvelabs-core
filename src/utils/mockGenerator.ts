@@ -151,18 +151,18 @@ const DDDS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 24, 27, 28, 31, 32, 33
 export const generatePhone = (rng: Rng = secureRng) =>
   `(${pick(rng, DDDS)}) 9${digits(rng, 4).join("")}-${digits(rng, 4).join("")}`;
 
-// --- Esquema -> JSON ---------------------------------------------------------
+// --- Esquema -> JSON (rótulos de cada tipo em `tools.mock.types.<id>`) ---------------------------------------------------------
 
 export const DATA_TYPES = [
-  { id: "cpf", label: "CPF Válido" },
-  { id: "cnpj", label: "CNPJ Válido" },
-  { id: "cep", label: "CEP (faixa real da UF)" },
-  { id: "nome", label: "Nome Brasileiro" },
-  { id: "email", label: "E-mail" },
-  { id: "telefone", label: "Telefone Celular" },
-  { id: "pix", label: "Chave PIX Aleatória (UUID)" },
-  { id: "pix_cpf", label: "Chave PIX (CPF mascarado)" },
-  { id: "pix_email", label: "Chave PIX (e-mail mascarado)" },
+  { id: "cpf" },
+  { id: "cnpj" },
+  { id: "cep" },
+  { id: "nome" },
+  { id: "email" },
+  { id: "telefone" },
+  { id: "pix" },
+  { id: "pix_cpf" },
+  { id: "pix_email" },
 ] as const;
 
 export type DataTypeId = (typeof DATA_TYPES)[number]["id"];

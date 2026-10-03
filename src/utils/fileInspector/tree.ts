@@ -1,3 +1,4 @@
+import { activeTranslator } from "@/i18n/active";
 /**
  * Nós de árvore com filhos calculados sob demanda (só quando o usuário expande): permite navegar em JSON/XML
  * com centenas de milhares de itens sem montar a árvore inteira na memória nem no DOM.
@@ -108,8 +109,8 @@ export function parseXml(text: string): ParsedXml {
   const doc = new DOMParser().parseFromString(text.replace(/^﻿/, ""), "application/xml");
   const err = doc.getElementsByTagName("parsererror")[0];
   if (err) {
-    const message = err.textContent?.split("\n").find((l) => l.trim() && !/^This page/i.test(l))?.trim() ?? "XML inválido";
-    throw new Error(`XML mal formado: ${message.slice(0, 160)}`);
+    const message = err.textContent?.split("\n").find((l) => l.trim() && !/^This page/i.test(l))?.trim() ?? activeTranslator().t("tools.inspector.xmlInvalidShort");
+    throw new Error(activeTranslator().t("tools.inspector.xmlInvalid", { message: message.slice(0, 160) }));
   }
   return { root: doc.documentElement, doc };
 }
@@ -119,14 +120,14 @@ export function parseJson(text: string): unknown {
   try {
     return JSON.parse(text.replace(/^﻿/, ""));
   } catch (err) {
-    const message = err instanceof Error ? err.message : "JSON inválido";
+    const message = err instanceof Error ? err.message : activeTranslator().t("tools.inspector.jsonInvalidShort");
     const pos = message.match(/position (\d+)/)?.[1];
     if (pos) {
       const before = text.slice(0, Number(pos));
       const line = before.split("\n").length;
       const col = before.length - before.lastIndexOf("\n");
-      throw new Error(`JSON inválido na linha ${line}, coluna ${col}: ${message.replace(/ in JSON at position \d+.*/, "").slice(0, 120)}`);
+      throw new Error(activeTranslator().t("tools.inspector.jsonLine", { line, col, message: message.replace(/ in JSON at position \d+.*/, "").slice(0, 120) }));
     }
-    throw new Error(`JSON inválido: ${message.slice(0, 160)}`);
+    throw new Error(activeTranslator().t("tools.inspector.jsonInvalid", { message: message.slice(0, 160) }));
   }
 }

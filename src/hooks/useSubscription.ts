@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "./useAuth";
 import { getSubscription } from "@/lib/fakeApi";
+import { useI18n } from "@/i18n/I18nProvider";
 import type { SubscriptionSummary } from "@/lib/subscription";
 
 /** Carrega a situação da assinatura de quem tem PRO, assinatura no Stripe ou pagamento pendente. */
 export function useSubscription() {
+  const { t } = useI18n();
   const { profile } = useAuth();
   const [summary, setSummary] = useState<SubscriptionSummary | null>(null);
   const [bonusDays, setBonusDays] = useState(0);
@@ -23,11 +25,11 @@ export function useSubscription() {
       setSummary(data.summary);
       setBonusDays(data.bonusDays);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar a assinatura.");
+      setError(err instanceof Error ? err.message : t("dashboard.subscription.loadFailed"));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // Recarrega quando o plano muda (ex.: depois do webhook do Stripe).
   const plan = profile?.plan;

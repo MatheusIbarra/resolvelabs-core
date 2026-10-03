@@ -1,0 +1,57 @@
+---
+title: "Error de GTIN vacío o inválido en Google Merchant Center: cómo solucionarlo"
+description: "Entiende por qué Google Merchant Center rechaza productos por GTIN vacío o inválido, cómo corregir el feed XML y cuándo usar identifier_exists."
+date: "2026-10-02"
+author: "Equipo ResolveLabs"
+---
+
+Los productos rechazados en Google Merchant Center por el GTIN son un problema común en las tiendas online y casi siempre vienen del feed XML. Esta guía explica las causas más frecuentes y qué se puede corregir de forma segura.
+
+## Qué es el GTIN
+
+GTIN (Global Trade Item Number) es el número del código de barras del producto. En el feed, va en la etiqueta `g:gtin`. Un GTIN válido tiene **8, 12, 13 o 14 dígitos** y el último es un **dígito verificador**, calculado a partir de los anteriores. Si algún dígito está mal, Merchant Center rechaza el valor.
+
+## Causas comunes del error
+
+- **GTIN con máscara:** puntos, espacios o guiones en medio del número (`789.123...`).
+- **Longitud incorrecta:** ceros de menos o de más, o un código interno de la tienda en lugar del código de barras.
+- **Dígito verificador inválido:** el número tiene la longitud correcta, pero fue escrito o generado mal.
+- **Campo vacío** en productos que deberían tener código de barras.
+- **XML mal formado:** HTML suelto en la descripción, `&` sin escapar y etiquetas sin cerrar hacen que Merchant Center lea mal el feed.
+
+## Cómo corregir cada caso
+
+### Máscara y XML roto
+
+Quita puntos, espacios y guiones del GTIN y deja solo los dígitos. En descripciones y títulos, elimina el HTML y escapa el `&` como `&amp;`. Esto se puede hacer en lote con una herramienta.
+
+### Dígito verificador inválido
+
+Aquí no existe una corrección automática honesta: el número correcto solo lo conoce el fabricante. Comprueba el GTIN en el embalaje o en el registro del proveedor. Inventar un número que pase la validación es peor que dejar el campo fuera, porque Google puede rechazar el producto por información incorrecta.
+
+### Producto sin GTIN
+
+Si el producto realmente no tiene código de barras (artículos artesanales, bajo pedido, marca propia), no rellenes `g:gtin`. Envía la marca y el código del fabricante (`g:brand` y `g:mpn`) y, cuando no exista ningún identificador, indica `g:identifier_exists` con el valor `no`. Consulta la documentación oficial de Google para las reglas de tu categoría.
+
+## Cómo ayuda el Reparador de XML
+
+El Reparador de XML de ResolveLabs se encarga de la parte mecánica del problema, directamente en el navegador:
+
+- quita la **máscara** del GTIN;
+- **señala** los GTIN con dígito verificador inválido, para que los compruebes con el proveedor (no inventa números);
+- elimina el HTML de descripciones y títulos;
+- corrige `&` sueltos, precios fuera del estándar e IDs ausentes.
+
+Es una función del plan PRO. Si solo quieres revisar antes la estructura del XML, el visor de XML es gratuito.
+
+<ToolCta slug="reparador-xml-merchant">Valida el feed, limpia el HTML y mira los GTIN con problemas en un clic. Función del plan PRO.</ToolCta>
+
+<ToolCta slug="visualizador-xml">¿Prefieres solo mirar el feed antes? Abre el XML en árbol, gratis y sin subir el archivo.</ToolCta>
+
+## Lista de comprobación rápida
+
+1. ¿El feed es un XML bien formado?
+2. ¿Los GTIN tienen 8, 12, 13 o 14 dígitos, sin máscara?
+3. ¿Los GTIN señalados como inválidos se comprobaron con el fabricante?
+4. ¿Los productos sin código de barras están sin `g:gtin` y con `identifier_exists` correcto?
+5. Después de corregir, ¿se reenvió el feed y se siguió el estado en Merchant Center?

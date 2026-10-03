@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { VARIANT_STYLES, VariantIcon, type Variant } from "./icons";
 
 interface ToastOptions {
@@ -30,6 +31,7 @@ const MAX_VISIBLE = 4;
 const ToastContext = createContext<ToastApi | null>(null);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const { t: tr } = useI18n();
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const nextId = useRef(1);
   const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
@@ -86,7 +88,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <p className={t.title ? "text-stone-600" : ""}>{t.message}</p>
             </div>
             <button
-              aria-label="Fechar notificação"
+              aria-label={tr("common.ui.closeNotification")}
               onClick={() => dismiss(t.id)}
               className="-mr-1 rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700"
             >

@@ -1,0 +1,57 @@
+---
+title: "Empty or invalid GTIN error in Google Merchant Center: how to fix it"
+description: "Understand why Google Merchant Center rejects products for an empty or invalid GTIN, how to fix the XML feed and when to use identifier_exists."
+date: "2026-10-02"
+author: "ResolveLabs Team"
+---
+
+Products rejected in Google Merchant Center because of the GTIN are a common problem in online stores, and they almost always come from the XML feed. This guide explains the most frequent causes and what can be fixed safely.
+
+## What a GTIN is
+
+GTIN (Global Trade Item Number) is the number of the product's barcode. In the feed, it goes in the `g:gtin` tag. A valid GTIN has **8, 12, 13 or 14 digits** and the last one is a **check digit**, calculated from the previous ones. If any digit is wrong, Merchant Center rejects the value.
+
+## Common causes of the error
+
+- **GTIN with a mask:** dots, spaces or dashes in the middle of the number (`789.123...`).
+- **Wrong length:** too few or too many zeros, or an internal store code instead of the barcode.
+- **Invalid check digit:** the number has the right length but was typed or generated wrong.
+- **Empty field** on products that should have a barcode.
+- **Malformed XML:** stray HTML in the description, an unescaped `&` and unclosed tags make Merchant Center read the feed wrongly.
+
+## How to fix each case
+
+### Mask and broken XML
+
+Remove dots, spaces and dashes from the GTIN and leave only the digits. In descriptions and titles, remove the HTML and escape `&` as `&amp;`. This can be done in bulk with a tool.
+
+### Invalid check digit
+
+There is no honest automatic fix here: only the manufacturer knows the right number. Check the GTIN on the packaging or in the supplier's catalog. Making up a number that passes validation is worse than leaving the field out, because Google may reject the product for incorrect information.
+
+### Product without a GTIN
+
+If the product really has no barcode (handmade items, made to order, private label), don't fill in `g:gtin`. Send the brand and the manufacturer code (`g:brand` and `g:mpn`) and, when no identifier exists, set `g:identifier_exists` to `no`. Check Google's official documentation for the rules of your category.
+
+## How the XML Fixer helps
+
+The ResolveLabs XML Fixer handles the mechanical part of the problem, right in your browser:
+
+- removes the GTIN **mask**;
+- **flags** GTINs with an invalid check digit, so you can confirm them with the supplier (it doesn't make up numbers);
+- removes HTML from descriptions and titles;
+- fixes stray `&`, non-standard prices and missing IDs.
+
+It's a PRO plan feature. If you just want to check the XML structure first, the XML viewer is free.
+
+<ToolCta slug="reparador-xml-merchant">Validate the feed, clean the HTML and see the problem GTINs in one click. PRO plan feature.</ToolCta>
+
+<ToolCta slug="visualizador-xml">Prefer to just look at the feed first? Open the XML as a tree, for free and without uploading the file.</ToolCta>
+
+## Quick checklist
+
+1. Is the feed well-formed XML?
+2. Do the GTINs have 8, 12, 13 or 14 digits, with no mask?
+3. Were the GTINs flagged as invalid checked with the manufacturer?
+4. Do products without a barcode have no `g:gtin` and the right `identifier_exists`?
+5. After fixing, was the feed resubmitted and the status followed in Merchant Center?

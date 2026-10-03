@@ -11,12 +11,14 @@ import { FREE_PDF_LIMIT, SUPPORTED_BANKS } from "@/lib/content";
 import { Loading, LoadingLabel } from "./ui/Loading";
 import Alert from "./ui/Alert";
 import { useToast } from "./ui/Toast";
-import { MSG, errorMessage } from "@/lib/messages";
+import { errorMessage } from "@/lib/messages";
+import { useI18n } from "@/i18n/I18nProvider";
 
 const ACCEPTED_TYPE = "application/pdf";
 const TOOL_SLUG = "pdf-para-ofx";
 
 export default function UploadZone() {
+  const { t, tn } = useI18n();
   const toast = useToast();
   const paywall = usePaywall();
   const { checkAccess, isChecking: isValidating } = useAccessControl();
@@ -36,7 +38,7 @@ export default function UploadZone() {
   const handleFile = async (file: File | undefined) => {
     if (!file || isBusy) return;
     if (file.type !== ACCEPTED_TYPE) {
-      toast.error(MSG.pdf.invalidFormat);
+      toast.error(t("msg.pdf.invalidFormat"));
       return;
     }
     if (!(await validateAccess())) return;
@@ -52,13 +54,13 @@ export default function UploadZone() {
       // 2) Conversão 100% local: o PDF nunca sai do navegador.
       const result = await convertPdfToOfx(file);
       if (result.transactions.length === 0) {
-        toast.error(MSG.pdf.noTransactions);
+        toast.error(t("msg.pdf.noTransactions"));
         return; // sem resultado: o uso reservado é devolvido no finally
       }
       delivered = true;
       // 3) Download do .ofx.
       downloadBlob(ofxToBlob(result.ofx), `${baseName(file.name)}.ofx`);
-      toast.success(MSG.pdf.converted(file.name, result.transactions.length), { title: MSG.pdf.convertedTitle });
+      toast.success(tn("msg.pdf.converted", result.transactions.length, { name: file.name }), { title: t("msg.pdf.convertedTitle") });
       result.warnings.forEach((w) => toast.warning(w));
     } catch (err) {
       if (err instanceof ApiError && err.code === "LIMIT_REACHED") {
@@ -69,7 +71,7 @@ export default function UploadZone() {
       } else if (err instanceof PdfNoTextError) {
         toast.error(err.message);
       } else {
-        toast.error(errorMessage(err, MSG.pdf.failed));
+        toast.error(errorMessage(err, t("msg.pdf.failed")));
       }
     } finally {
       if (reserved && !delivered) {
@@ -135,29 +137,29 @@ export default function UploadZone() {
 
   // Estado de carregamento (texto de terminal) e avisos persistentes abaixo da zona de drop
   let status: React.ReactNode = null;
-  if (isLoading) status = <Loading>Carregando seu perfil…</Loading>;
-  else if (isValidating) status = <Loading>Verificando seu acesso…</Loading>;
-  else if (isProcessing) status = <Loading>Convertendo o arquivo…</Loading>;
-  else if (profileError) status = <Alert variant="error">{profileError} Clique na área acima para tentar novamente.</Alert>;
-  else if (isLimitReached) status = <Alert variant="warning">{MSG.pdf.limitReached}</Alert>;
+  if (isLoading) status = <Loading>{t("tools.pdf.loadingProfile")}</Loading>;
+  else if (isValidating) status = <Loading>{t("tools.pdf.verifying")}</Loading>;
+  else if (isProcessing) status = <Loading>{t("tools.pdf.converting")}</Loading>;
+  else if (profileError) status = <Alert variant="error">{profileError} {t("tools.pdf.profileErrorHint")}</Alert>;
+  else if (isLimitReached) status = <Alert variant="warning">{t("msg.pdf.limitReached")}</Alert>;
 
-  let buttonLabel: React.ReactNode = "Selecionar arquivo";
-  if (isLoading) buttonLabel = <LoadingLabel>Carregando perfil…</LoadingLabel>;
-  else if (isValidating) buttonLabel = <LoadingLabel>Verificando acesso…</LoadingLabel>;
-  else if (isProcessing) buttonLabel = <LoadingLabel>Convertendo…</LoadingLabel>;
+  let buttonLabel: React.ReactNode = t("tools.pdf.selectFile");
+  if (isLoading) buttonLabel = <LoadingLabel>{t("tools.pdf.loadingProfileShort")}</LoadingLabel>;
+  else if (isValidating) buttonLabel = <LoadingLabel>{t("tools.pdf.verifyingShort")}</LoadingLabel>;
+  else if (isProcessing) buttonLabel = <LoadingLabel>{t("tools.pdf.convertingShort")}</LoadingLabel>;
 
   return (
     <section className="card">
       <div className="flex items-center justify-between gap-4 border-b border-stone-200 px-5 py-4">
-        <h2 className="section-title">Enviar extrato</h2>
+        <h2 className="section-title">{t("tools.pdf.title")}</h2>
         {isLoading ? (
-          <Loading>Carregando…</Loading>
+          <Loading>{t("common.ui.loading")}</Loading>
         ) : profile ? (
           isPro ? (
-            <span className="badge-brand">Plano PRO · uso ilimitado</span>
+            <span className="badge-brand">{t("tools.pdf.proPlan")}</span>
           ) : (
-            <span className="badge-neutral" aria-label={`Uso gratuito: ${used} de ${FREE_PDF_LIMIT}`}>
-              Uso gratuito: {used}/{FREE_PDF_LIMIT}
+            <span className="badge-neutral" aria-label={t("tools.pdf.freeUseAria", { used, limit: FREE_PDF_LIMIT })}>
+              {t("tools.pdf.freeUse", { used, limit: FREE_PDF_LIMIT })}
             </span>
           )
         ) : null}
@@ -194,9 +196,9 @@ export default function UploadZone() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
           </svg>
           <p className="mb-1 text-lg font-semibold text-stone-900">
-            {isDragging ? "Solte o arquivo para enviar" : "Arraste seu extrato em PDF aqui"}
+            {isDragging ? t("tools.pdf.drop") : t("tools.pdf.drag")}
           </p>
-          <p className="mb-6 text-sm text-stone-600">ou clique para buscar no computador</p>
+          <p className="mb-6 text-sm text-stone-600">{t("tools.pdf.click")}</p>
           <span className="btn-primary pointer-events-none" aria-hidden>
             {buttonLabel}
           </span>
@@ -206,7 +208,7 @@ export default function UploadZone() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-t border-stone-200 px-5 py-4">
-        <span className="mr-1 text-sm text-stone-500">Formatos suportados:</span>
+        <span className="mr-1 text-sm text-stone-500">{t("tools.pdf.formats")}</span>
         {SUPPORTED_BANKS.map((bank) => (
           <span key={bank} className="badge-neutral">{bank}</span>
         ))}

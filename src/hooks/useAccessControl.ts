@@ -3,7 +3,8 @@
 import { useCallback, useState } from "react";
 import { decideAccess, getProfile } from "@/lib/fakeApi";
 import { getTool } from "@/lib/tools";
-import { MSG, errorMessage } from "@/lib/messages";
+import { errorMessage } from "@/lib/messages";
+import { useI18n } from "@/i18n/I18nProvider";
 import { useToast } from "@/components/ui/Toast";
 import { usePaywall } from "./usePaywall";
 
@@ -26,6 +27,7 @@ export interface AccessRequest {
  */
 export function useAccessControl() {
   const toast = useToast();
+  const { t } = useI18n();
   const paywall = usePaywall();
   const [isChecking, setIsChecking] = useState(false);
 
@@ -34,20 +36,20 @@ export function useAccessControl() {
       setIsChecking(true);
       try {
         const tool = slug ? getTool(slug) : undefined;
-        if (slug && !tool) throw new Error(`Ferramenta desconhecida: ${slug}`);
+        if (slug && !tool) throw new Error(t("msg.api.unknownTool"));
         const decision = decideAccess(await getProfile(), { requiresPro: tool?.requiresPro ?? isProTool, freeLimit: tool?.freeLimit });
         if (decision.allowed) return true;
         paywall.open(decision.reason);
         return false;
       } catch (err) {
         // Falha de rede/servidor não é motivo para mostrar paywall: avisa e barra a ação.
-        toast.error(errorMessage(err, MSG.tools.validateFailed));
+        toast.error(errorMessage(err, t("msg.tools.validateFailed")));
         return false;
       } finally {
         setIsChecking(false);
       }
     },
-    [paywall, toast],
+    [paywall, toast, t],
   );
 
   return { checkAccess, isChecking };

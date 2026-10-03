@@ -1,3 +1,4 @@
+import { apiError } from "@/lib/apiError";
 import { NextResponse, type NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
@@ -10,7 +11,6 @@ import { logActivity } from "@/lib/activityLog";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const INVALID_CREDENTIALS = { error: "E-mail ou senha incorretos." };
 
 // Hash descartável para igualar o tempo de resposta quando o e-mail não existe
 // (evita enumeração de usuários por diferença de timing).
@@ -18,24 +18,24 @@ let dummyHash: Promise<string> | null = null;
 const getDummyHash = () => (dummyHash ??= bcrypt.hash("resolvelabs-dummy-password", 12));
 
 export async function POST(request: NextRequest) {
-  const limited = rateLimit(`login:ip:${clientIp(request)}`, 20, 15 * 60_000);
+  const limited = rateLimit(`login:ip:${clientIp(request)}`, 20, 15 * 60_000, request);
   if (limited) return limited;
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Corpo da requisição inválido." }, { status: 400 });
+    return apiError(request, "invalidBody", 400);
   }
 
   const email = parseEmail(body?.email);
   const password = body?.password;
   if (!email || typeof password !== "string" || password.length === 0 || password.length > 1024) {
-    return NextResponse.json(INVALID_CREDENTIALS, { status: 401 });
+    return apiError(request, "invalidCredentials", 401);
   }
 
   // Limite extra por e-mail: freia ataques de senha distribuídos entre IPs.
-  const emailLimited = rateLimit(`login:email:${email}`, 10, 15 * 60_000);
+  const emailLimited = rateLimit(`login:email:${email}`, 10, 15 * 60_000, request);
   if (emailLimited) return emailLimited;
 
   try {
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     const valid = await bcrypt.compare(password, passwordHash);
     if (!user || !valid) {
       await logActivity(request, { event: "login_failed", email });
-      return NextResponse.json(INVALID_CREDENTIALS, { status: 401 });
+      return apiError(request, "invalidCredentials", 401);
     }
 
     await expireProIfNeeded(user);
@@ -57,6 +57,6 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (err) {
     console.error("[auth/login]", err);
-    return NextResponse.json({ error: "Erro interno. Tente novamente." }, { status: 500 });
+    return apiError(request, "internal", 500);
   }
 }

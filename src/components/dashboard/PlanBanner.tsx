@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
+import { useI18n } from "@/i18n/I18nProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { openBillingPortal } from "@/lib/fakeApi";
 import { FREE_PDF_LIMIT } from "@/lib/content";
-import { MSG, errorMessage } from "@/lib/messages";
+import { errorMessage } from "@/lib/messages";
 import { Loading, LoadingLabel } from "../ui/Loading";
 import Alert from "../ui/Alert";
 import { useToast } from "../ui/Toast";
@@ -13,33 +14,33 @@ import { useToast } from "../ui/Toast";
 export default function PlanBanner() {
   const router = useRouter();
   const toast = useToast();
+  const { t } = useI18n();
   const { profile, isLoading, error, refresh } = useAuth();
   const [isOpening, setIsOpening] = useState(false);
   const isPro = profile?.plan === "PRO";
   const stripeManaged = isPro && profile?.hasBilling;
 
   let message: React.ReactNode;
-  if (isLoading) message = <Loading>Verificando sua conta…</Loading>;
+  if (isLoading) message = <Loading>{t("dashboard.planBanner.checking")}</Loading>;
   else if (error) message = error;
-  else if (stripeManaged) message = "Seu plano atual é o PRO. Você tem acesso ilimitado a todas as ferramentas disponíveis.";
-  else if (isPro) message = "Seu plano atual é o PRO. Você tem acesso ilimitado a todas as ferramentas disponíveis.";
-  else message = `Seu plano atual é o FREE (${profile?.usageCount ?? 0}/${FREE_PDF_LIMIT} conversões usadas). Assine o PRO para liberar todas as ferramentas.`;
+  else if (isPro) message = t("dashboard.planBanner.proActive");
+  else message = t("dashboard.planBanner.free", { used: profile?.usageCount ?? 0, limit: FREE_PDF_LIMIT });
 
   const manage = async () => {
     setIsOpening(true);
     try {
       window.location.assign(await openBillingPortal());
     } catch (err) {
-      toast.error(errorMessage(err, MSG.billing.portalFailed));
+      toast.error(errorMessage(err, t("msg.billing.portalFailed")));
       setIsOpening(false);
     }
   };
 
   const action = error
-    ? { label: "Tentar novamente", run: refresh }
+    ? { label: t("common.ui.tryAgain"), run: refresh }
     : stripeManaged
-      ? { label: isOpening ? <LoadingLabel>Abrindo o portal…</LoadingLabel> : "Gerenciar no Stripe", run: manage }
-      : { label: isPro ? "Assinar o PRO" : "Fazer upgrade", run: () => router.push("/checkout") };
+      ? { label: isOpening ? <LoadingLabel>{t("dashboard.planBanner.openingPortal")}</LoadingLabel> : t("dashboard.planBanner.manage"), run: manage }
+      : { label: isPro ? t("dashboard.planBanner.subscribePro") : t("dashboard.planBanner.upgrade"), run: () => router.push("/checkout") };
 
   const paymentFailed = Boolean(profile?.paymentFailed) && !isPro;
 
@@ -48,15 +49,15 @@ export default function PlanBanner() {
     {paymentFailed && (
       <Alert
         variant="error"
-        title="Não conseguimos cobrar seu cartão"
+        title={t("dashboard.planBanner.paymentFailedTitle")}
         className="mb-4"
         action={
           <button onClick={manage} disabled={isOpening} className="btn-secondary shrink-0 !px-3 !py-1.5">
-            {isOpening ? <LoadingLabel>Abrindo o portal…</LoadingLabel> : "Atualizar pagamento"}
+            {isOpening ? <LoadingLabel>{t("dashboard.planBanner.openingPortal")}</LoadingLabel> : t("dashboard.planBanner.updatePayment")}
           </button>
         }
       >
-        Seu acesso PRO foi suspenso. Atualize a forma de pagamento para reativar.
+        {t("dashboard.planBanner.paymentFailedBody")}
       </Alert>
     )}
     <section className="card mb-10 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">

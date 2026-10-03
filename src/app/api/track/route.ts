@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
  * logado (resolvido no servidor pelo cookie), IP, local aproximado e navegador. Nunca grava nome ou conteúdo de arquivo.
  */
 export async function POST(request: NextRequest) {
-  const limited = rateLimit(`track:${clientIp(request)}`, 120, 10 * 60_000);
+  const limited = rateLimit(`track:${clientIp(request)}`, 120, 10 * 60_000, request);
   if (limited) return limited;
 
   let body: { tool?: unknown; event?: unknown; kind?: unknown };

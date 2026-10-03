@@ -1,20 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
+import { useI18n } from "@/i18n/I18nProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { checkToolAccess } from "@/lib/fakeApi";
-import { TOOLS, type Tool } from "@/lib/tools";
+import { TOOLS, toolCopy, type Tool } from "@/lib/tools";
 import type { DenyReason } from "@/lib/content";
 import PaywallModal from "../PaywallModal";
 import { LoadingLabel } from "../ui/Loading";
 import { useToast } from "../ui/Toast";
 import { startRouteProgress } from "../ui/RouteProgress";
-import { MSG, errorMessage } from "@/lib/messages";
+import { errorMessage } from "@/lib/messages";
 
 export default function ToolsGrid() {
   const router = useRouter();
   const toast = useToast();
+  const { t, raw } = useI18n();
+  const items = raw("common.tools.items");
   const { profile } = useAuth();
   const [validatingSlug, setValidatingSlug] = useState<string | null>(null);
   const [denied, setDenied] = useState<DenyReason | null>(null);
@@ -30,7 +33,7 @@ export default function ToolsGrid() {
       }
       else setDenied(access.reason);
     } catch (err) {
-      toast.error(errorMessage(err, MSG.tools.validateFailed));
+      toast.error(errorMessage(err, t("msg.tools.validateFailed")));
     } finally {
       setValidatingSlug(null);
     }
@@ -39,7 +42,7 @@ export default function ToolsGrid() {
   return (
     <section>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="section-title">Suas ferramentas</h2>
+        <h2 className="section-title">{t("dashboard.toolsGrid.title")}</h2>
       </div>
 
       <div className="stagger grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -47,6 +50,7 @@ export default function ToolsGrid() {
           const live = tool.status === "live";
           const locked = live && tool.requiresPro && profile?.plan !== "PRO";
           const validating = validatingSlug === tool.slug;
+          const copy = toolCopy(items, tool.slug);
 
           return (
             <article
@@ -66,23 +70,23 @@ export default function ToolsGrid() {
                   </svg>
                 </span>
                 {!live ? (
-                  <span className="badge-warn">Em breve</span>
+                  <span className="badge-warn">{t("dashboard.toolsGrid.soon")}</span>
                 ) : tool.requiresPro ? (
-                  <span className="badge-brand">PRO</span>
+                  <span className="badge-brand">{t("dashboard.toolsGrid.pro")}</span>
                 ) : (
-                  <span className="badge-neutral">Grátis</span>
+                  <span className="badge-neutral">{t("dashboard.toolsGrid.free")}</span>
                 )}
               </div>
 
-              <h3 className={`mb-1 text-base font-semibold ${live ? "text-stone-900" : "text-stone-600"}`}>{tool.name}</h3>
-              <p className={`mb-6 flex-1 text-sm ${live ? "text-stone-600" : "text-stone-500"}`}>{tool.description}</p>
+              <h3 className={`mb-1 text-base font-semibold ${live ? "text-stone-900" : "text-stone-600"}`}>{copy.name}</h3>
+              <p className={`mb-6 flex-1 text-sm ${live ? "text-stone-600" : "text-stone-500"}`}>{copy.description}</p>
 
               {live ? (
                 <button onClick={() => openTool(tool)} disabled={validatingSlug !== null} className={locked ? "btn-secondary" : "btn-primary"}>
-                  {validating ? <LoadingLabel>Verificando acesso…</LoadingLabel> : locked ? "Exclusivo PRO" : "Abrir ferramenta"}
+                  {validating ? <LoadingLabel>{t("dashboard.toolsGrid.verifying")}</LoadingLabel> : locked ? t("dashboard.toolsGrid.proOnly") : t("dashboard.toolsGrid.open")}
                 </button>
               ) : (
-                <button disabled className="btn-secondary">Disponível em breve</button>
+                <button disabled className="btn-secondary">{t("dashboard.toolsGrid.availableSoon")}</button>
               )}
             </article>
           );

@@ -2,8 +2,9 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { getProfile, type UserProfile } from "@/lib/fakeApi";
-import { MSG, errorMessage } from "@/lib/messages";
+import { errorMessage } from "@/lib/messages";
 import { useToast } from "@/components/ui/Toast";
+import { useI18n } from "@/i18n/I18nProvider";
 
 interface AuthValue {
   profile: UserProfile | null;
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const toast = useToast();
+  const { t } = useI18n();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,13 +31,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setProfile(await getProfile());
     } catch (err) {
-      const message = errorMessage(err, MSG.auth.profileFailed);
+      const message = errorMessage(err, t("msg.auth.profileFailed"));
       setError(message);
       toast.error(message);
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, t]);
 
   useEffect(() => {
     refresh();

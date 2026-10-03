@@ -1,4 +1,5 @@
 // Cliente da API administrativa (/api/admin/*). Todas as rotas validam o role admin no servidor.
+import { activeTranslator, apiFetch } from "@/i18n/active";
 
 export interface AdminUser {
   id: string;
@@ -92,16 +93,16 @@ function activityQuery(filters: ActivityFilters, cursor?: string | null): string
 async function adminRequest<T>(url: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(url, {
+    res = await apiFetch(url, {
       cache: "no-store",
       ...init,
       headers: init?.body ? { "Content-Type": "application/json", ...init.headers } : init?.headers,
     });
   } catch {
-    throw new Error("Não foi possível conectar ao servidor.");
+    throw new Error(activeTranslator().t("msg.api.network"));
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.error ?? "Falha na requisição.");
+  if (!res.ok) throw new Error(data?.error ?? activeTranslator().t("msg.api.requestFailed"));
   return data as T;
 }
 

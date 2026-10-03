@@ -1,3 +1,4 @@
+import { activeTranslator } from "@/i18n/active";
 import type { OfxBalance, OfxData, OfxTransaction } from "./types";
 
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
@@ -63,7 +64,7 @@ export function parseOfx(text: string): OfxData {
   for (const m of headerText.matchAll(/^\s*([A-Z]+):\s*(.*)$/gm)) header[m[1]] = m[2].trim();
   for (const m of headerText.matchAll(/(\w+)="([^"]*)"/g)) header[m[1].toUpperCase()] = m[2]; // cabeçalho XML (<?OFX ...?>)
 
-  if (headerEnd < 0) warnings.push("Tag <OFX> não encontrada: o arquivo pode estar corrompido ou não ser OFX.");
+  if (headerEnd < 0) warnings.push(activeTranslator().t("tools.inspector.ofxNoTag"));
 
   const body = headerEnd >= 0 ? clean.slice(headerEnd) : clean;
   const sonrs = section(body, "SONRS");
@@ -81,7 +82,7 @@ export function parseOfx(text: string): OfxData {
     const block = m[1];
     const amount = parseOfxAmount(tag(block, "TRNAMT"));
     if (!Number.isFinite(amount)) {
-      warnings.push(`Transação ignorada: valor inválido (FITID ${tag(block, "FITID") ?? "?"}).`);
+      warnings.push(activeTranslator().t("tools.inspector.ofxSkipped", { fitid: tag(block, "FITID") ?? "?" }));
       continue;
     }
     const name = tag(block, "NAME") ?? "";
@@ -96,7 +97,7 @@ export function parseOfx(text: string): OfxData {
       checkNumber: tag(block, "CHECKNUM"),
     });
   }
-  if (transactions.length === 0 && headerEnd >= 0) warnings.push("Nenhuma transação (<STMTTRN>) encontrada.");
+  if (transactions.length === 0 && headerEnd >= 0) warnings.push(activeTranslator().t("tools.inspector.ofxNone"));
 
   let credits = 0;
   let debits = 0;

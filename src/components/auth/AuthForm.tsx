@@ -1,35 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link, localizeHref } from "@/i18n/navigation";
+import { useI18n } from "@/i18n/I18nProvider";
+import { apiFetch } from "@/i18n/active";
 import Alert from "../ui/Alert";
 import { LoadingLabel } from "../ui/Loading";
 import { useToast } from "../ui/Toast";
-import { AUTH_MSG } from "@/lib/messages";
+import type { Locale } from "@/i18n/config";
 
 type Mode = "login" | "register";
 
-const COPY: Record<Mode, { title: string; description: string; submit: string; pending: string; altText: string; altLink: string; altHref: string }> = {
-  login: {
-    title: "Entrar na sua conta",
-    description: "Acesse seu painel e suas ferramentas.",
-    submit: "Entrar",
-    pending: "Entrando…",
-    altText: "Ainda não tem conta?",
-    altLink: "Criar conta",
-    altHref: "/register",
-  },
-  register: {
-    title: "Criar conta gratuita",
-    description: "Comece no plano FREE. Você pode assinar o PRO quando quiser.",
-    submit: "Criar conta",
-    pending: "Criando sua conta…",
-    altText: "Já tem conta?",
-    altLink: "Entrar",
-    altHref: "/login",
-  },
-};
+const ALT_HREF: Record<Mode, string> = { login: "/register", register: "/login" };
 
 /** Máscara brasileira: (XX) XXXXX-XXXX. */
 function maskPhone(value: string): string {
@@ -40,13 +22,13 @@ function maskPhone(value: string): string {
 }
 
 /** Só aceita caminhos internos para evitar open redirect. */
-function safeNext(): string {
+function safeNext(locale: Locale): string {
   const next = new URLSearchParams(window.location.search).get("next");
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+  return next && next.startsWith("/") && !next.startsWith("//") ? localizeHref(locale, next) : localizeHref(locale, "/dashboard");
 }
 
 async function post(url: string, body: unknown): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(url, {
+  const res = await apiFetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -56,8 +38,7 @@ async function post(url: string, body: unknown): Promise<{ ok: boolean; error?: 
 }
 
 export default function AuthForm({ mode }: { mode: Mode }) {
-  const copy = COPY[mode];
-  const router = useRouter();
+  const { t, locale } = useI18n();
   const toast = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -77,7 +58,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   useEffect(() => {
     if (mode !== "register") return;
     let ignore = false;
-    fetch("/api/referral", { cache: "no-store" })
+    apiFetch("/api/referral", { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => !ignore && setReferralCode(d.code ?? null))
       .catch(() => {});
@@ -95,30 +76,30 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       const credentials = { email, password };
       if (mode === "register") {
         if (phone.replace(/\D/g, "").length !== 11) {
-          setError("Informe um celular válido com DDD: (XX) XXXXX-XXXX.");
+          setError(t("auth.phoneInvalid"));
           return;
         }
         if (!termsAccepted) {
-          setError("É necessário aceitar os Termos de Uso.");
+          setError(t("auth.termsRequired"));
           return;
         }
         // A indicação vai no cookie resolvelabs_ref (definido pelo middleware em ?ref=CODIGO).
         const registered = await post("/api/auth/register", { ...credentials, phone, termsAccepted });
         if (!registered.ok) {
-          setError(registered.error ?? AUTH_MSG.network);
+          setError(registered.error ?? t("msg.auth.network"));
           return;
         }
       }
       const logged = await post("/api/auth/login", credentials);
       if (!logged.ok) {
-        setError(logged.error ?? AUTH_MSG.network);
+        setError(logged.error ?? t("msg.auth.network"));
         return;
       }
-      toast.success(mode === "register" ? AUTH_MSG.registerSuccess : AUTH_MSG.loginSuccess);
+      toast.success(mode === "register" ? t("msg.auth.registerSuccess") : t("msg.auth.loginSuccess"));
       // Navegação completa: garante que o middleware leia o novo cookie.
-      window.location.assign(safeNext());
+      window.location.assign(safeNext(locale));
     } catch {
-      setError(AUTH_MSG.network);
+      setError(t("msg.auth.network"));
     } finally {
       setIsPending(false);
     }
@@ -127,15 +108,15 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   return (
     <div className="card mx-auto w-full max-w-md p-6 sm:p-8">
       {referralCode && (
-        <Alert variant="success" title="Você foi convidado(a) por um amigo" className="mb-5">
-          Indicação aplicada (código <span className="font-mono font-semibold">{referralCode}</span>). Crie sua conta para começar.
+        <Alert variant="success" title={t("auth.referral.title")} className="mb-5">
+          {t("auth.referral.body", { code: referralCode })}
         </Alert>
       )}
-      <h1 className="mb-1 text-2xl font-semibold tracking-tight text-stone-900">{copy.title}</h1>
-      <p className="mb-6 text-sm text-stone-600">{copy.description}</p>
+      <h1 className="mb-1 text-2xl font-semibold tracking-tight text-stone-900">{t(`auth.${mode}.title`)}</h1>
+      <p className="mb-6 text-sm text-stone-600">{t(`auth.${mode}.description`)}</p>
 
       <form onSubmit={submit} noValidate>
-        <label htmlFor="email" className="label">E-mail</label>
+        <label htmlFor="email" className="label">{t("auth.email")}</label>
         <input
           id="email"
           type="email"
@@ -143,11 +124,11 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="voce@empresa.com"
+          placeholder={t("auth.emailPlaceholder")}
           className="input mb-4"
         />
 
-        <label htmlFor="password" className="label">Senha</label>
+        <label htmlFor="password" className="label">{t("auth.password")}</label>
         <input
           id="password"
           type="password"
@@ -156,13 +137,13 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           minLength={8}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder={mode === "register" ? "Mínimo de 8 caracteres" : "Sua senha"}
+          placeholder={mode === "register" ? t("auth.passwordPlaceholderRegister") : t("auth.passwordPlaceholderLogin")}
           className="input mb-5"
         />
 
         {mode === "register" && (
           <>
-            <label htmlFor="phone" className="label">Celular</label>
+            <label htmlFor="phone" className="label">{t("auth.phone")}</label>
             <input
               id="phone"
               type="tel"
@@ -171,7 +152,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
               required
               value={phone}
               onChange={(e) => setPhone(maskPhone(e.target.value))}
-              placeholder="(11) 91234-5678"
+              placeholder={t("auth.phonePlaceholder")}
               className="input mb-5"
             />
 
@@ -185,8 +166,8 @@ export default function AuthForm({ mode }: { mode: Mode }) {
                 className="mt-0.5 h-4 w-4 shrink-0 accent-teal-700"
               />
               <span>
-                Li e concordo com os{" "}
-                <Link href="/termos" target="_blank" className="font-medium text-teal-700 hover:underline">Termos de Uso</Link>
+                {t("auth.termsLead")}{" "}
+                <Link href="/termos" target="_blank" className="font-medium text-teal-700 hover:underline">{t("auth.termsLink")}</Link>
               </span>
             </label>
           </>
@@ -195,13 +176,13 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         {error && <Alert variant="error" className="mb-5">{error}</Alert>}
 
         <button type="submit" disabled={isPending || !email || !password || (mode === "register" && (!phone || !termsAccepted))} className="btn-primary w-full py-3">
-          {isPending ? <LoadingLabel>{copy.pending}</LoadingLabel> : copy.submit}
+          {isPending ? <LoadingLabel>{t(`auth.${mode}.pending`)}</LoadingLabel> : t(`auth.${mode}.submit`)}
         </button>
       </form>
 
       <p className="mt-5 text-center text-sm text-stone-600">
-        {copy.altText}{" "}
-        <Link href={`${copy.altHref}${nextQuery}`} className="font-medium text-teal-700 hover:underline">{copy.altLink}</Link>
+        {t(`auth.${mode}.altText`)}{" "}
+        <Link href={`${ALT_HREF[mode]}${nextQuery}`} className="font-medium text-teal-700 hover:underline">{t(`auth.${mode}.altLink`)}</Link>
       </p>
     </div>
   );

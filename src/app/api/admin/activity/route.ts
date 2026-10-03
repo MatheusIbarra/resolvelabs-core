@@ -1,3 +1,4 @@
+import { apiError } from "@/lib/apiError";
 import { NextResponse, type NextRequest } from "next/server";
 import { Types } from "mongoose";
 import { connectDB } from "@/lib/mongodb";
@@ -55,6 +56,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     console.error("[admin/activity]", err);
-    return NextResponse.json({ error: "Erro interno. Tente novamente." }, { status: 500 });
+    return apiError(request, "internal", 500);
   }
 }

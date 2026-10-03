@@ -1,40 +1,46 @@
 import type { Metadata } from "next";
 import { absoluteUrl } from "./site";
-import type { SeoTool } from "./seo-tools";
+import type { SeoTool } from "./seo-content";
 import type { PostMeta } from "./blog";
+import { HREFLANG, type Locale } from "@/i18n/config";
+import { localizePath } from "@/i18n/paths";
+import { buildAlternates, buildOpenGraph } from "@/i18n/seo";
+import { getTranslator } from "@/i18n/server";
 
 const BRAND = "ResolveLabs";
 
-export function buildSeoMetadata(tool: SeoTool): Metadata {
+export function buildSeoMetadata(locale: Locale, tool: SeoTool): Metadata {
   const title = `${tool.title} | ${BRAND}`;
+  const alternates = buildAlternates(locale, tool.path);
   return {
     title,
     description: tool.description,
-    alternates: { canonical: tool.path },
-    openGraph: {
+    alternates,
+    openGraph: buildOpenGraph(locale, {
       type: "website",
-      siteName: BRAND,
-      locale: "pt_BR",
-      url: tool.path,
+      url: alternates.canonical as string,
       title,
       description: tool.description,
       images: [{ url: "/og-image.png", width: 1200, height: 630, alt: tool.h1 }],
-    },
+    }),
     twitter: { card: "summary_large_image", title, description: tool.description, images: ["/og-image.png"] },
   };
 }
 
+/** URL absoluta de um caminho canônico no idioma pedido. */
+const urlOf = (locale: Locale, canonicalPath: string) => absoluteUrl(localizePath(locale, canonicalPath));
+
 /** SoftwareApplication: app web no navegador, com as ofertas reais (gratuito e/ou PRO). Sem avaliações. */
-export function softwareApplicationSchema(tool: SeoTool) {
+export function softwareApplicationSchema(locale: Locale, tool: SeoTool) {
   return {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: tool.h1,
     description: tool.description,
-    url: absoluteUrl(tool.path),
+    url: urlOf(locale, tool.path),
     applicationCategory: tool.applicationCategory ?? "BusinessApplication",
-    operatingSystem: "Web (navegador)",
-    inLanguage: "pt-BR",
+    operatingSystem: getTranslator(locale).t("seo.schema.operatingSystem"),
+    inLanguage: HREFLANG[locale],
     featureList: tool.features,
     offers: tool.offers.map((o) => ({
       "@type": "Offer",
@@ -43,15 +49,16 @@ export function softwareApplicationSchema(tool: SeoTool) {
       priceCurrency: "BRL",
       description: o.description,
     })),
-    publisher: { "@type": "Organization", name: BRAND, url: absoluteUrl("/") },
+    publisher: { "@type": "Organization", name: BRAND, url: urlOf(locale, "/") },
   };
 }
 
 /** FAQPage espelha exatamente o FAQ visível na página. */
-export function faqPageSchema(tool: SeoTool) {
+export function faqPageSchema(locale: Locale, tool: SeoTool) {
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
+    inLanguage: HREFLANG[locale],
     mainEntity: tool.faq.map((item) => ({
       "@type": "Question",
       name: item.q,
@@ -60,8 +67,8 @@ export function faqPageSchema(tool: SeoTool) {
   };
 }
 
-export function blogPostingSchema(post: PostMeta) {
-  const url = absoluteUrl(`/blog/${post.slug}`);
+export function blogPostingSchema(locale: Locale, post: PostMeta) {
+  const url = urlOf(locale, `/blog/${post.slug}`);
   return {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -69,34 +76,34 @@ export function blogPostingSchema(post: PostMeta) {
     description: post.description,
     datePublished: post.date,
     dateModified: post.updated ?? post.date,
-    inLanguage: "pt-BR",
+    inLanguage: HREFLANG[locale],
     url,
     mainEntityOfPage: url,
     image: absoluteUrl("/og-image.png"),
     author: { "@type": "Organization", name: post.author },
-    publisher: { "@type": "Organization", name: BRAND, url: absoluteUrl("/") },
+    publisher: { "@type": "Organization", name: BRAND, url: urlOf(locale, "/") },
   };
 }
 
-export function blogBreadcrumbSchema(post: PostMeta) {
+export function blogBreadcrumbSchema(locale: Locale, post: PostMeta) {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
-      { "@type": "ListItem", position: 2, name: "Blog", item: absoluteUrl("/blog") },
-      { "@type": "ListItem", position: 3, name: post.title, item: absoluteUrl(`/blog/${post.slug}`) },
+      { "@type": "ListItem", position: 1, name: getTranslator(locale).t("seo.schema.home"), item: urlOf(locale, "/") },
+      { "@type": "ListItem", position: 2, name: "Blog", item: urlOf(locale, "/blog") },
+      { "@type": "ListItem", position: 3, name: post.title, item: urlOf(locale, `/blog/${post.slug}`) },
     ],
   };
 }
 
-export function breadcrumbSchema(tool: SeoTool) {
+export function breadcrumbSchema(locale: Locale, tool: SeoTool) {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
-      { "@type": "ListItem", position: 2, name: tool.shortName, item: absoluteUrl(tool.path) },
+      { "@type": "ListItem", position: 1, name: getTranslator(locale).t("seo.schema.home"), item: urlOf(locale, "/") },
+      { "@type": "ListItem", position: 2, name: tool.shortName, item: urlOf(locale, tool.path) },
     ],
   };
 }

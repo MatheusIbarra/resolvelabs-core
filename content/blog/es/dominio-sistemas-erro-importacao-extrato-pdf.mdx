@@ -1,0 +1,50 @@
+---
+title: "Cómo resolver el error de importación de extractos PDF en Domínio Sistemas"
+description: "Por qué Domínio no importa extractos bancarios en PDF, qué formatos acepta (OFX, OFC y Febraban) y cómo convertir el PDF a OFX para importarlo."
+date: "2026-10-02"
+author: "Equipo ResolveLabs"
+---
+
+Descargaste el extracto del cliente, intentaste importarlo en Domínio y el archivo no fue aceptado. Cuando el archivo es un PDF, el motivo suele ser simple: la importación de extractos bancarios trabaja con formatos estructurados, no con PDF.
+
+> ResolveLabs no tiene vínculo con Domínio Sistemas ni con Thomson Reuters. Esta guía usa información del centro de ayuda público de Domínio y puede quedar desactualizada según la versión del sistema.
+
+## Qué formatos acepta Domínio
+
+Según el [centro de atención de Domínio](https://suporte.dominioatendimento.com/central/faces/solucao.html?codigo=238), la importación de extractos bancarios acepta los diseños **OFX**, **OFC** y **Febraban 240**. El PDF no está entre ellos.
+
+Tiene sentido: el PDF muestra el extracto visualmente, pero no separa fecha, importe y descripción de forma que un sistema pueda leerlos con seguridad. El OFX, en cambio, trae cada movimiento con los campos identificados.
+
+## Cómo importar el extracto (paso a paso)
+
+Según el mismo centro de ayuda, el camino es el menú **Utilitários > Importar > Extrato bancário** (Utilidades > Importar > Extracto bancario). Los nombres pueden variar según la versión de tu sistema, pero el flujo es este:
+
+1. Indica el **período** del extracto.
+2. Indica la **cuenta contable del banco**.
+3. Si la empresa tiene sucursal, indica el código de la empresa.
+4. Elige el **tipo de diseño** (OFX, por ejemplo).
+5. Localiza el archivo e impórtalo. Revisa los movimientos mostrados y guarda.
+
+## Detalles que evitan dolores de cabeza
+
+- **Histórico:** Domínio usa la etiqueta `MEMO` del OFX como histórico del movimiento y, si falta, usa `NAME`. Un OFX con ambos campos vacíos genera movimientos sin descripción.
+- **Período:** el centro de ayuda indica que el período de importación está limitado a **12 meses**. Si el extracto es mayor, divídelo en archivos.
+
+## Qué hacer cuando solo tienes el PDF
+
+1. **Pide primero el OFX al banco.** Muchos sitios de banca por internet ofrecen exportar el extracto en OFX. Busca "exportar" o "guardar en otros formatos" en la pantalla del extracto.
+2. **Si el banco solo ofrece PDF**, convierte el PDF a OFX antes de importar.
+
+<ToolCta slug="conversor-pdf-para-ofx">Convierte el extracto en PDF a OFX en el navegador: el PDF no pasa por nuestros servidores. Se necesita una cuenta gratuita y algunas conversiones están incluidas sin costo.</ToolCta>
+
+Si tu banco tiene página propia, las guías de abajo traen el paso a paso de exportación:
+
+- [Extracto de Nubank en OFX](/ferramentas/pdf-para-ofx-nubank)
+- [Extracto de Itaú en OFX](/ferramentas/pdf-para-ofx-itau)
+- [Extracto de Bradesco en OFX](/ferramentas/pdf-para-ofx-bradesco)
+
+## Revisa el OFX antes de importar
+
+Después de generar o descargar el archivo, ábrelo antes de importar. Comprueba que el período, el saldo y la cantidad de movimientos coincidan con el extracto original. Cualquier conversión automática de PDF depende del diseño del banco, así que la revisión es responsabilidad de quien importa.
+
+<ToolCta slug="visualizador-ofx">Abre el OFX y revisa el saldo y los movimientos antes de importar en Domínio.</ToolCta>

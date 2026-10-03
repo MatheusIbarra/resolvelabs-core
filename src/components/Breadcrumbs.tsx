@@ -1,4 +1,7 @@
-import Link from "next/link";
+"use client";
+
+import { Link } from "@/i18n/navigation";
+import { useI18n } from "@/i18n/I18nProvider";
 
 // Home leva à página inicial, categorias à lista de ferramentas e o último item é a página atual.
 function hrefFor(index: number, total: number): string | null {
@@ -8,8 +11,9 @@ function hrefFor(index: number, total: number): string | null {
 
 /** `hrefs` (mesmo tamanho de `items`) substitui o padrão Home → "/" e categorias → "/ferramentas". */
 export default function Breadcrumbs({ items, hrefs }: { items: string[]; hrefs?: (string | null)[] }) {
+  const { t } = useI18n();
   return (
-    <nav aria-label="Breadcrumb" className="page-container flex flex-wrap items-center gap-2 py-5 text-sm text-stone-500">
+    <nav aria-label={t("common.nav.breadcrumb")} className="page-container flex flex-wrap items-center gap-2 py-5 text-sm text-stone-500">
       {items.map((item, i) => {
         const href = hrefs ? (i === items.length - 1 ? null : hrefs[i] ?? null) : hrefFor(i, items.length);
         return (

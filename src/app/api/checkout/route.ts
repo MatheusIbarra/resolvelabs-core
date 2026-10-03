@@ -1,3 +1,7 @@
+import { apiError } from "@/lib/apiError";
+import { getRequestLocale, requestTranslator } from "@/i18n/server";
+import { STRIPE_LOCALE } from "@/i18n/config";
+import { localizePath } from "@/i18n/paths";
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser, unauthenticated } from "@/lib/serverAuth";
 import { StripeNotConfiguredError, appUrl, getStripe } from "@/lib/stripe";
@@ -12,13 +16,13 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
-    if (!user) return unauthenticated();
+    if (!user) return unauthenticated(request);
 
     if (user.role === "admin") {
-      return NextResponse.json({ error: "Contas admin já têm acesso total." }, { status: 400 });
+      return apiError(request, "adminFullAccess", 400);
     }
     if (user.role === "pro" && user.stripeSubscriptionId) {
-      return NextResponse.json({ error: "Você já possui uma assinatura ativa." }, { status: 409 });
+      return apiError(request, "activeSubscription", 409);
     }
 
     let body: { couponCode?: unknown } = {};
@@ -31,19 +35,19 @@ export async function POST(request: NextRequest) {
     // Cupom opcional. O cliente só envia o código; o desconto vem sempre do banco.
     let coupon: Awaited<ReturnType<typeof findUsableCoupon>> | null = null;
     if (body.couponCode !== undefined && body.couponCode !== null && body.couponCode !== "") {
-      const limited = rateLimit(`coupon:${user.id}`, 10, 10 * 60_000);
+      const limited = rateLimit(`coupon:${user.id}`, 10, 10 * 60_000, request);
       if (limited) return limited;
       coupon = await findUsableCoupon(body.couponCode);
-      if (!coupon.ok) return NextResponse.json({ error: coupon.error }, { status: 400 });
+      if (!coupon.ok) return apiError(request, coupon.error, 400);
     }
 
     // 100% de desconto = acesso gratuito vitalício: não passa pelo Stripe.
     if (coupon?.ok && coupon.coupon.discountPercent === 100) {
       if (user.role === "pro" && !user.planExpiresAt) {
-        return NextResponse.json({ error: "Você já tem acesso PRO vitalício." }, { status: 409 });
+        return apiError(request, "lifetimePro", 409);
       }
       if (!(await consumeCoupon(coupon.coupon.code))) {
-        return NextResponse.json({ error: "Este cupom atingiu o limite de usos." }, { status: 400 });
+        return apiError(request, "couponExhausted", 400);
       }
       user.role = "pro";
       user.planExpiresAt = undefined;
@@ -53,6 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     const stripe = getStripe();
+    const locale = getRequestLocale(request);
     const base = appUrl(request.nextUrl.origin);
     const userId = user.id;
 
@@ -81,7 +86,7 @@ export async function POST(request: NextRequest) {
             recurring: { interval: "month" },
             product_data: {
               name: "ResolveLabs PRO",
-              description: "Acesso ilimitado a todas as ferramentas do ResolveLabs.",
+              description: requestTranslator(request).t("api.stripeProductDescription"),
             },
           },
         },
@@ -96,18 +101,18 @@ export async function POST(request: NextRequest) {
       },
       payment_method_collection: "always", // exige cartão já no início do teste
       ...(user.stripeCustomerId ? { customer: user.stripeCustomerId } : { customer_email: user.email }),
-      locale: "pt-BR",
-      success_url: `${base}/dashboard?checkout=success`,
-      cancel_url: `${base}/checkout?checkout=canceled`,
+      locale: STRIPE_LOCALE[locale],
+      success_url: `${base}${localizePath(locale, "/dashboard")}?checkout=success`,
+      cancel_url: `${base}${localizePath(locale, "/checkout")}?checkout=canceled`,
     });
 
-    if (!session.url) throw new Error("Stripe não retornou a URL do checkout.");
+    if (!session.url) throw new Error("Stripe did not return the checkout URL.");
     return NextResponse.json({ url: session.url, trial: eligibleForTrial });
   } catch (err) {
     if (err instanceof StripeNotConfiguredError) {
-      return NextResponse.json({ error: "Pagamentos indisponíveis no momento." }, { status: 503 });
+      return apiError(request, "paymentsUnavailable", 503);
     }
     console.error("[checkout]", err);
-    return NextResponse.json({ error: "Não foi possível iniciar o checkout. Tente novamente." }, { status: 500 });
+    return apiError(request, "checkoutFailed", 500);
   }
 }

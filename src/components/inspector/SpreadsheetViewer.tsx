@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { SpreadsheetEngine } from "@/utils/fileInspector/spreadsheet";
 import { columnLabel, formatNumber } from "@/utils/fileInspector/format";
+import { useI18n } from "@/i18n/I18nProvider";
 import { BAR, BTN, DIM, TABLIST, tabClass } from "./ui";
 
 const ROW_H = 30;
@@ -22,6 +23,7 @@ interface GridProps {
 
 /** Grade virtualizada: só as linhas visíveis existem no DOM e os dados chegam do worker em blocos. */
 function SheetGrid({ engine, sheetIndex, onCopy }: GridProps) {
+  const { t } = useI18n();
   const sheet = engine.sheets[sheetIndex];
   const cols = Math.min(sheet.cols, MAX_COLS);
   const [scrollTop, setScrollTop] = useState(0);
@@ -65,7 +67,7 @@ function SheetGrid({ engine, sheetIndex, onCopy }: GridProps) {
   const width = GUTTER_W + cols * COL_W;
 
   if (sheet.rows === 0 || sheet.cols === 0) {
-    return <div className={`px-4 py-12 text-center text-sm ${DIM}`}>Esta aba está vazia.</div>;
+    return <div className={`px-4 py-12 text-center text-sm ${DIM}`}>{t("tools.inspector.sheetEmpty")}</div>;
   }
 
   const selectedValue = selected ? cell(selected.row, selected.col) : undefined;
@@ -106,12 +108,12 @@ function SheetGrid({ engine, sheetIndex, onCopy }: GridProps) {
           <>
             <span className="badge-brand font-mono">{columnLabel(selected.col)}{selected.row + 1}</span>
             <span className="min-w-0 flex-1 truncate text-stone-800" title={selectedValue}>{selectedValue ?? "…"}</span>
-            <button className={BTN} disabled={selectedValue === undefined} onClick={() => onCopy(selectedValue ?? "", "Célula copiada")}>
-              Copiar célula
+            <button className={BTN} disabled={selectedValue === undefined} onClick={() => onCopy(selectedValue ?? "", t("tools.inspector.cellCopied"))}>
+              {t("tools.inspector.copyCell")}
             </button>
           </>
         ) : (
-          <span className={DIM}>Clique em uma célula para ver e copiar o valor completo.</span>
+          <span className={DIM}>{t("tools.inspector.clickCell")}</span>
         )}
       </div>
       <div
@@ -138,19 +140,20 @@ function SheetGrid({ engine, sheetIndex, onCopy }: GridProps) {
         </div>
       </div>
       {sheet.cols > MAX_COLS && (
-        <p className={`border-t border-stone-200 px-4 py-2 text-xs ${DIM}`}>Exibindo as primeiras {MAX_COLS} de {formatNumber(sheet.cols)} colunas.</p>
+        <p className={`border-t border-stone-200 px-4 py-2 text-xs ${DIM}`}>{t("tools.inspector.firstCols", { max: MAX_COLS, total: formatNumber(sheet.cols) })}</p>
       )}
     </div>
   );
 }
 
 export default function SpreadsheetViewer({ engine, onCopy }: { engine: SpreadsheetEngine; onCopy: (text: string, label: string) => void }) {
+  const { t } = useI18n();
   const [sheetIndex, setSheetIndex] = useState(0);
   const sheet = engine.sheets[sheetIndex];
 
   return (
     <div>
-      <div role="tablist" aria-label="Abas da planilha" className={TABLIST}>
+      <div role="tablist" aria-label={t("tools.inspector.sheetsAria")} className={TABLIST}>
         {engine.sheets.map((s, i) => (
           <button key={`${s.name}-${i}`} role="tab" aria-selected={i === sheetIndex} onClick={() => setSheetIndex(i)} className={tabClass(i === sheetIndex)}>
             {s.name}
@@ -158,10 +161,10 @@ export default function SpreadsheetViewer({ engine, onCopy }: { engine: Spreadsh
         ))}
       </div>
       <div className={`${BAR} ${DIM}`} data-testid="sheet-stats">
-        <span>Aba <span className="font-medium text-stone-900">{sheet.name}</span></span>
-        <span><span className="font-medium text-stone-900">{formatNumber(sheet.rows)}</span> linhas</span>
-        <span><span className="font-medium text-stone-900">{formatNumber(sheet.cols)}</span> colunas</span>
-        <span className="text-xs">Processado em {engine.mode === "worker" ? "worker (thread separada)" : "thread principal"}</span>
+        <span>{t("tools.inspector.sheetLabel")} <span className="font-medium text-stone-900">{sheet.name}</span></span>
+        <span><span className="font-medium text-stone-900">{formatNumber(sheet.rows)}</span> {t("tools.inspector.rows")}</span>
+        <span><span className="font-medium text-stone-900">{formatNumber(sheet.cols)}</span> {t("tools.inspector.cols")}</span>
+        <span className="text-xs">{t("tools.inspector.processedIn")} {engine.mode === "worker" ? t("tools.inspector.worker") : t("tools.inspector.mainThread")}</span>
       </div>
       <SheetGrid key={sheetIndex} engine={engine} sheetIndex={sheetIndex} onCopy={onCopy} />
     </div>

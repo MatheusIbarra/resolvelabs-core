@@ -4,6 +4,7 @@
  * - Perfil, controle de acesso, uso e plano falam com a API real (`/api/*`, MongoDB + JWT).
  */
 import { FREE_PDF_LIMIT, type DenyReason } from "./content";
+import { activeTranslator, apiFetch } from "@/i18n/active";
 import { getTool } from "./tools";
 import type { Role } from "./roles";
 
@@ -89,15 +90,15 @@ function toProfile(user: ApiUser): UserProfile {
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(url, { cache: "no-store", ...init });
+    res = await apiFetch(url, { cache: "no-store", ...init });
   } catch {
-    throw new ApiError("REQUEST_FAILED", "Não foi possível conectar ao servidor.");
+    throw new ApiError("REQUEST_FAILED", activeTranslator().t("msg.api.network"));
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const code: ApiErrorCode =
       res.status === 401 ? "UNAUTHENTICATED" : data?.code === "LIMIT_REACHED" ? "LIMIT_REACHED" : "REQUEST_FAILED";
-    throw new ApiError(code, data?.error ?? "Falha na requisição.");
+    throw new ApiError(code, data?.error ?? activeTranslator().t("msg.api.requestFailed"));
   }
   return data as T;
 }
@@ -132,9 +133,9 @@ export function decideAccess(profile: UserProfile, rules: { requiresPro?: boolea
 
 function evaluateAccess(slug: string, profile: UserProfile): AccessResult {
   const tool = getTool(slug);
-  if (!tool) throw new ApiError("UNKNOWN_TOOL", "Ferramenta não encontrada.");
+  if (!tool) throw new ApiError("UNKNOWN_TOOL", activeTranslator().t("msg.api.unknownTool"));
   const result = decideAccess(profile, tool);
-  if (!result.allowed && result.reason === "AUTH_REQUIRED") throw new ApiError("UNAUTHENTICATED", "Sessão expirada. Faça login novamente.");
+  if (!result.allowed && result.reason === "AUTH_REQUIRED") throw new ApiError("UNAUTHENTICATED", activeTranslator().t("msg.api.sessionExpired"));
   return result;
 }
 
